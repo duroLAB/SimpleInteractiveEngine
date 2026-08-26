@@ -18,11 +18,11 @@ namespace SimpleInteractiveEngine.TestApp
         {
             DemoScene.Build(engine);
 
-            
-            
+
+
             this.KeyPreview = true;
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) engine.CancelDrawing(); };
-            this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) engine.FinishDrawing();};
+            this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) engine.FinishDrawing(); };
         }
 
         private void toolStripButtonAddPoint_Click(object sender, EventArgs e)
@@ -33,7 +33,12 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButtonAddPolyLine_Click(object sender, EventArgs e)
         {
             engine.StartDrawingPolyline("Nová trasa", new Pen(Color.ForestGreen, 3f));
-             
+
+        }
+
+        private void toolStripButtonAddPolygon_Click(object sender, EventArgs e)
+        {
+            engine.StartDrawingPolygon("Nový polygon", new SolidBrush(Color.FromArgb(128, Color.LightBlue)), new Pen(Color.DarkBlue, 2f));
         }
     }
 }

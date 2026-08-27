@@ -315,6 +315,7 @@ namespace SimpleDrawingEngine
             if (linePen != null) _drawingPolyline.WithLinePen(linePen);
             Polylines.Add(_drawingPolyline);
 
+            _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);
             Render();
         }
@@ -329,6 +330,7 @@ namespace SimpleDrawingEngine
             if (outlinePen != null) _drawingPolygon.WithOutlinePen(outlinePen);
             Polygons.Add(_drawingPolygon);
 
+            _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);
             Render();
         }
@@ -347,6 +349,7 @@ namespace SimpleDrawingEngine
                 _drawingPolyline = null;
                 _drawingOwnedVertices.Clear();
                 _drawingPreviewScreenPos = null;
+                _pictureBox.Cursor = Cursors.Default;
                 Render();
                 PolylineDrawingFinished?.Invoke(this, finished);
                 return;
@@ -360,6 +363,7 @@ namespace SimpleDrawingEngine
                 _drawingPolygon = null;
                 _drawingOwnedVertices.Clear();
                 _drawingPreviewScreenPos = null;
+                _pictureBox.Cursor = Cursors.Default;
                 Render();
                 PolygonDrawingFinished?.Invoke(this, finished);
             }
@@ -379,6 +383,7 @@ namespace SimpleDrawingEngine
             foreach (var v in _drawingOwnedVertices) Points.Remove(v);
             _drawingOwnedVertices.Clear();
             _drawingPreviewScreenPos = null;
+            _pictureBox.Cursor = Cursors.Default;
 
             Render();
             DrawingCancelled?.Invoke(this, EventArgs.Empty);
@@ -398,9 +403,17 @@ namespace SimpleDrawingEngine
             CancelDrawing();
             _placingPointOptions = new PointPlacementOptions
             {
-                Label = label, Brush = brush, Pen = pen, Size = size, Shape = shape,
-                Selectable = selectable, Draggable = draggable, HoverEnabled = hoverEnabled, Continuous = continuous
+                Label = label,
+                Brush = brush,
+                Pen = pen,
+                Size = size,
+                Shape = shape,
+                Selectable = selectable,
+                Draggable = draggable,
+                HoverEnabled = hoverEnabled,
+                Continuous = continuous
             };
+            _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);
         }
 
@@ -412,9 +425,17 @@ namespace SimpleDrawingEngine
             CancelDrawing();
             _placingImageOptions = new ImagePlacementOptions
             {
-                Image = image, Label = label, Width = width, Height = height, ScaleWithZoom = scaleWithZoom,
-                Selectable = selectable, Draggable = draggable, HoverEnabled = hoverEnabled, Continuous = continuous
+                Image = image,
+                Label = label,
+                Width = width,
+                Height = height,
+                ScaleWithZoom = scaleWithZoom,
+                Selectable = selectable,
+                Draggable = draggable,
+                HoverEnabled = hoverEnabled,
+                Continuous = continuous
             };
+            _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);
         }
 
@@ -428,7 +449,11 @@ namespace SimpleDrawingEngine
                 opts.Selectable, opts.Draggable, opts.HoverEnabled);
 
             PointPlaced?.Invoke(this, p);
-            if (!opts.Continuous) _placingPointOptions = null;
+            if (!opts.Continuous)
+            {
+                _placingPointOptions = null;
+                _pictureBox.Cursor = Cursors.Default;
+            }
         }
 
         /// <summary>Creates and places an icon according to the current StartPlacingImages() settings at the given screen position.</summary>
@@ -443,7 +468,11 @@ namespace SimpleDrawingEngine
             Render();
 
             ImagePlaced?.Invoke(this, marker);
-            if (!opts.Continuous) _placingImageOptions = null;
+            if (!opts.Continuous)
+            {
+                _placingImageOptions = null;
+                _pictureBox.Cursor = Cursors.Default;
+            }
         }
 
         /// <summary>Adds a vertex at the given screen position to the shape currently being drawn - either by

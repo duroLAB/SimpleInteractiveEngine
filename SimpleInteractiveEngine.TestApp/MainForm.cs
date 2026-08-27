@@ -25,8 +25,11 @@ namespace SimpleInteractiveEngine.TestApp
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) engine.FinishDrawing(); };
         }
 
+    
+
         private void toolStripButtonAddPoint_Click(object sender, EventArgs e)
         {
+           // pictureBox1.Cursor = CreatePointCursor();
             engine.StartPlacingPoints(label: "New Point", brush: new SolidBrush(Color.Crimson), shape: ActiveCanvas.PointShape.Diamond, size: 8f, continuous: false);
         }
 

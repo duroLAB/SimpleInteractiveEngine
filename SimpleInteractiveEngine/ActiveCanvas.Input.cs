@@ -172,7 +172,8 @@ namespace SimpleDrawingEngine
 
             if (changed)
             {
-                _pictureBox.Cursor = Cursors.Default;
+                if (!IsDrawing)
+                    _pictureBox.Cursor = Cursors.Default;
                 Render();
             }
         }
@@ -187,8 +188,12 @@ namespace SimpleDrawingEngine
             _hoverPoint = hitPoint;
             _hoverImage = hitImage;
 
-            bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false);
-            _pictureBox.Cursor = selectable ? Cursors.Hand : Cursors.Default;
+            // While drawing/placing, DrawingCursor stays put regardless of what's hovered underneath.
+            if (!IsDrawing)
+            {
+                bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false);
+                _pictureBox.Cursor = selectable ? Cursors.Hand : Cursors.Default;
+            }
             Render();
         }
 

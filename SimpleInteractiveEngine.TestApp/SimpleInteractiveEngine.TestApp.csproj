@@ -27,4 +27,50 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="testIcons\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="testIcons\add_circle_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\apps_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\arrow_back_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\arrow_forward_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\cancel_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\check_box_outline_blank_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\check_circle_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\close_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\delete_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\home_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\login_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\search_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="testIcons\settings_32dp_2854C5_FILL0_wght400_GRAD0_opsz40.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

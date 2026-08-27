@@ -47,8 +47,8 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButton3D2Dview_Click(object sender, EventArgs e)
         {
             float pd = engine.PitchDegrees;
-            
-            if(pd>= 89f && pd < 91)
+
+            if (pd >= 89f && pd < 91)
             {
                 toolStripButton3D2Dview.Image = imageList1.Images[0];
                 engine.ShowIsometricView();
@@ -59,12 +59,31 @@ namespace SimpleInteractiveEngine.TestApp
                 toolStripButton3D2Dview.Image = imageList1.Images[1];
                 engine.ShowTopView();
                 engine.AllowFreeRotate = false;
-            } 
-            
-                
-                
+            }
 
-            
+
+
+
+
+        }
+
+        private void toolStripButtonAddIcon_Click(object sender, EventArgs e)
+        {
+            string iconsPath = Path.Combine(AppContext.BaseDirectory, "testicons");
+            using (var dlg = new IconPicker.IconPickerDialog(iconsPath))
+            {
+                dlg.ThumbnailSize = 32;   // predvolené
+                dlg.IconsPerRow = 60;     // predvolené, ovplyvňuje počiatočnú šírku okna
+                dlg.AllowedExtensions = new[] { ".png", ".bmp", ".ico" };
+
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                {
+                    string cesta = dlg.SelectedFilePath;
+                    // pictureBox1.Image = Image.FromFile(cesta);
+                    Image icon = Image.FromFile(cesta);
+                    engine.StartPlacingImages(icon, label: "Kamera", width: 32, continuous: false);
+                }
+            }
         }
     }
 }

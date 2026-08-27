@@ -35,7 +35,7 @@
             toolStripButtonAddPoint = new ToolStripButton();
             toolStripButtonAddPolyLine = new ToolStripButton();
             toolStripButtonAddPolygon = new ToolStripButton();
-            toolStripButton1 = new ToolStripButton();
+            toolStripButtonAddIcon = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
             toolStripButton3D2Dview = new ToolStripButton();
             imageList1 = new ImageList(components);
@@ -57,7 +57,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButton1, toolStripSeparator1, toolStripButton3D2Dview });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripSeparator1, toolStripButton3D2Dview });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -97,14 +97,15 @@
             toolStripButtonAddPolygon.Text = "Add polygon";
             toolStripButtonAddPolygon.Click += toolStripButtonAddPolygon_Click;
             // 
-            // toolStripButton1
+            // toolStripButtonAddIcon
             // 
-            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
-            toolStripButton1.ImageTransparentColor = Color.Magenta;
-            toolStripButton1.Name = "toolStripButton1";
-            toolStripButton1.Size = new Size(36, 36);
-            toolStripButton1.Text = "toolStripButton1";
+            toolStripButtonAddIcon.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonAddIcon.Image = (Image)resources.GetObject("toolStripButtonAddIcon.Image");
+            toolStripButtonAddIcon.ImageTransparentColor = Color.Magenta;
+            toolStripButtonAddIcon.Name = "toolStripButtonAddIcon";
+            toolStripButtonAddIcon.Size = new Size(36, 36);
+            toolStripButtonAddIcon.Text = "toolStripButton1";
+            toolStripButtonAddIcon.Click += toolStripButtonAddIcon_Click;
             // 
             // toolStripSeparator1
             // 
@@ -162,7 +163,7 @@
         private ToolStripButton toolStripButtonAddPoint;
         private ToolStripButton toolStripButtonAddPolyLine;
         private ToolStripButton toolStripButtonAddPolygon;
-        private ToolStripButton toolStripButton1;
+        private ToolStripButton toolStripButtonAddIcon;
         private ToolStripSeparator toolStripSeparator1;
         private ToolStripButton toolStripButton3D2Dview;
         private ImageList imageList1;

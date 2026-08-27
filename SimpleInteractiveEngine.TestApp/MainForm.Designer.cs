@@ -38,6 +38,8 @@
             toolStripButtonAddIcon = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
             toolStripButton3D2Dview = new ToolStripButton();
+            toolStripSeparator2 = new ToolStripSeparator();
+            toolStripButtonFullZoom = new ToolStripButton();
             imageList1 = new ImageList(components);
             statusStrip1 = new StatusStrip();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -57,7 +59,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripSeparator1, toolStripButton3D2Dview });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripSeparator1, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -122,6 +124,21 @@
             toolStripButton3D2Dview.Text = "toolStripButton2";
             toolStripButton3D2Dview.Click += toolStripButton3D2Dview_Click;
             // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new Size(6, 39);
+            // 
+            // toolStripButtonFullZoom
+            // 
+            toolStripButtonFullZoom.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonFullZoom.Image = (Image)resources.GetObject("toolStripButtonFullZoom.Image");
+            toolStripButtonFullZoom.ImageTransparentColor = Color.Magenta;
+            toolStripButtonFullZoom.Name = "toolStripButtonFullZoom";
+            toolStripButtonFullZoom.Size = new Size(36, 36);
+            toolStripButtonFullZoom.Text = "toolStripButton1";
+            toolStripButtonFullZoom.Click += toolStripButtonFullZoom_Click;
+            // 
             // imageList1
             // 
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
@@ -168,5 +185,7 @@
         private ToolStripButton toolStripButton3D2Dview;
         private ImageList imageList1;
         private StatusStrip statusStrip1;
+        private ToolStripSeparator toolStripSeparator2;
+        private ToolStripButton toolStripButtonFullZoom;
     }
 }

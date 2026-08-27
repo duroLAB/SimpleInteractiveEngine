@@ -44,14 +44,21 @@ namespace SimpleDrawingEngine
 
         private PointF Project(Vector3 world, out float depth)
         {
-            var afterYaw = Vector3.Transform(world, Matrix4x4.CreateRotationZ(DegToRad(_yawDeg)));
-            var rotated = Vector3.Transform(afterYaw, Matrix4x4.CreateRotationX(DegToRad(_pitchDeg)));
-
+            var rotated = RotateToView(world);
             depth = rotated.Y; // only for draw-order sorting (painter's algorithm), not real perspective
 
             float screenX = rotated.X * _pixelsPerMeter + _panOffsetPixels.X;
             float screenY = -rotated.Z * _pixelsPerMeter + _panOffsetPixels.Y;
             return new PointF(screenX, screenY);
+        }
+
+        /// <summary>Applies only the camera's rotation (yaw then pitch) to a world-space point, without zoom/pan.
+        /// Shared by Project() and ZoomToFullExtent() - the "raw" X/Z here are exactly what Project() later
+        /// scales by _pixelsPerMeter and offsets by _panOffsetPixels.</summary>
+        private Vector3 RotateToView(Vector3 world)
+        {
+            var afterYaw = Vector3.Transform(world, Matrix4x4.CreateRotationZ(DegToRad(_yawDeg)));
+            return Vector3.Transform(afterYaw, Matrix4x4.CreateRotationX(DegToRad(_pitchDeg)));
         }
 
         /// <summary>Finds the clickable point under the given screen position (within tolerance), or null.
@@ -525,6 +532,73 @@ namespace SimpleDrawingEngine
                 screenAnchor.Y - rawBefore.Y * _pixelsPerMeter);
 
             Render();
+        }
+
+        /// <summary>
+        /// Sets zoom and pan so that every item currently on the canvas - points, polyline/polygon
+        /// vertices, icons, and the background image if one is loaded - is visible at once, with a small
+        /// margin around the edges. Does nothing if the scene is completely empty.
+        /// </summary>
+        /// <param name="marginFraction">Extra breathing room around the content, as a fraction of the
+        /// content's own size (0.1 = 10% margin on each side). Use 0 to fit exactly, edge to edge.</param>
+        public void ZoomToFullExtent(float marginFraction = 0.1f)
+        {
+            if (_buffer == null) return;
+
+            var rawPoints = new List<(float x, float z)>();
+
+            foreach (var p in Points) rawPoints.Add(ProjectRawXZ(p.World));
+            foreach (var im in Images) rawPoints.Add(ProjectRawXZ(im.World));
+
+            // Include the background image's 4 corners too, if one is loaded - the current camera
+            // rotation can make any of them the extreme point, not just the "top-left" one.
+            if (_backgroundImage != null)
+            {
+                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin));
+                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin + new Vector3(_bgWorldWidth, 0, 0)));
+                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin + new Vector3(0, -_bgWorldHeight, 0)));
+                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin + new Vector3(_bgWorldWidth, -_bgWorldHeight, 0)));
+            }
+
+            if (rawPoints.Count == 0) return; // nothing to fit to - leave the current view untouched
+
+            float minX = rawPoints.Min(p => p.x);
+            float maxX = rawPoints.Max(p => p.x);
+            float minZ = rawPoints.Min(p => p.z);
+            float maxZ = rawPoints.Max(p => p.z);
+
+            // Guard against a degenerate (single point, or all points on one line) extent, so we don't
+            // end up dividing by ~0 and zooming in to infinity.
+            float spanX = Math.Max(maxX - minX, 0.01f);
+            float spanZ = Math.Max(maxZ - minZ, 0.01f);
+
+            int viewW = _buffer.Width;
+            int viewH = _buffer.Height;
+
+            float marginMultiplier = 1f + Math.Max(0f, marginFraction) * 2f;
+            float ppmX = viewW / (spanX * marginMultiplier);
+            float ppmZ = viewH / (spanZ * marginMultiplier);
+
+            _pixelsPerMeter = Math.Max(_minPixelsPerMeter, Math.Min(_maxPixelsPerMeter, Math.Min(ppmX, ppmZ)));
+
+            // Center the content's bounding box in the middle of the view - same screenX/screenY formulas
+            // as Project(), just solved backwards for the pan offset instead of the screen position.
+            float centerX = (minX + maxX) / 2f;
+            float centerZ = (minZ + maxZ) / 2f;
+
+            _panOffsetPixels = new PointF(
+                viewW / 2f - centerX * _pixelsPerMeter,
+                viewH / 2f + centerZ * _pixelsPerMeter);
+
+            Render();
+        }
+
+        /// <summary>Rotation-only projection (no zoom/pan) - the raw X/Z that ZoomToFullExtent fits a
+        /// bounding box around, before deciding on a scale and pan offset.</summary>
+        private (float x, float z) ProjectRawXZ(Vector3 world)
+        {
+            var rotated = RotateToView(world);
+            return (rotated.X, rotated.Z);
         }
 
         private static float DegToRad(float deg) => deg * (float)Math.PI / 180f;

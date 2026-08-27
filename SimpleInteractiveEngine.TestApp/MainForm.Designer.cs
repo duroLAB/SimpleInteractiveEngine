@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             pictureBox1 = new PictureBox();
             toolStrip1 = new ToolStrip();
@@ -36,15 +37,19 @@
             toolStripButtonAddPolygon = new ToolStripButton();
             toolStripButton1 = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
+            toolStripButton3D2Dview = new ToolStripButton();
+            imageList1 = new ImageList(components);
+            statusStrip1 = new StatusStrip();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             toolStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // pictureBox1
             // 
-            pictureBox1.Location = new Point(136, 55);
+            pictureBox1.Dock = DockStyle.Fill;
+            pictureBox1.Location = new Point(0, 39);
             pictureBox1.Name = "pictureBox1";
-            pictureBox1.Size = new Size(537, 316);
+            pictureBox1.Size = new Size(800, 389);
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
             // 
@@ -52,7 +57,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButton1, toolStripSeparator1 });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButton1, toolStripSeparator1, toolStripButton3D2Dview });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -106,13 +111,40 @@
             toolStripSeparator1.Name = "toolStripSeparator1";
             toolStripSeparator1.Size = new Size(6, 39);
             // 
+            // toolStripButton3D2Dview
+            // 
+            toolStripButton3D2Dview.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButton3D2Dview.Image = (Image)resources.GetObject("toolStripButton3D2Dview.Image");
+            toolStripButton3D2Dview.ImageTransparentColor = Color.Magenta;
+            toolStripButton3D2Dview.Name = "toolStripButton3D2Dview";
+            toolStripButton3D2Dview.Size = new Size(36, 36);
+            toolStripButton3D2Dview.Text = "toolStripButton2";
+            toolStripButton3D2Dview.Click += toolStripButton3D2Dview_Click;
+            // 
+            // imageList1
+            // 
+            imageList1.ColorDepth = ColorDepth.Depth32Bit;
+            imageList1.ImageStream = (ImageListStreamer)resources.GetObject("imageList1.ImageStream");
+            imageList1.TransparentColor = Color.Transparent;
+            imageList1.Images.SetKeyName(0, "2D");
+            imageList1.Images.SetKeyName(1, "3D");
+            // 
+            // statusStrip1
+            // 
+            statusStrip1.Location = new Point(0, 428);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new Size(800, 22);
+            statusStrip1.TabIndex = 2;
+            statusStrip1.Text = "statusStrip1";
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(toolStrip1);
             Controls.Add(pictureBox1);
+            Controls.Add(statusStrip1);
+            Controls.Add(toolStrip1);
             Name = "MainForm";
             Text = "Form1";
             Load += Form1_Load;
@@ -120,6 +152,7 @@
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -131,5 +164,8 @@
         private ToolStripButton toolStripButtonAddPolygon;
         private ToolStripButton toolStripButton1;
         private ToolStripSeparator toolStripSeparator1;
+        private ToolStripButton toolStripButton3D2Dview;
+        private ImageList imageList1;
+        private StatusStrip statusStrip1;
     }
 }

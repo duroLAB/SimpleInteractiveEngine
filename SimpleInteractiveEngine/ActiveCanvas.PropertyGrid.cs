@@ -122,9 +122,17 @@ namespace SimpleDrawingEngine
             _engine = engine;
         }
 
-        [Category("Position")] public float X { get => _point.World.X; set => Move(value, Y, Z); }
-        [Category("Position")] public float Y { get => _point.World.Y; set => Move(X, value, Z); }
-        [Category("Position")] public float Z { get => _point.World.Z; set => Move(X, Y, value); }
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float X { get => _engine.ToRaw(_point.World).X; set => Move(value, Y, Z); }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float Y { get => _engine.ToRaw(_point.World).Y; set => Move(X, value, Z); }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float Z { get => _engine.ToRaw(_point.World).Z; set => Move(X, Y, value); }
 
         [Category("Appearance")]
         public string Label { get => _point.Label; set { _point.WithLabel(value); _engine.Render(); } }
@@ -160,7 +168,7 @@ namespace SimpleDrawingEngine
 
         private void Move(float x, float y, float z)
         {
-            _point.MoveTo(new Vector3(x, y, z));
+            _point.MoveTo(_engine.ToLocal(new Vector3(x, y, z)));
             _engine.Render();
         }
     }
@@ -271,9 +279,17 @@ namespace SimpleDrawingEngine
             _engine = engine;
         }
 
-        [Category("Position")] public float X { get => _marker.World.X; set => Move(value, Y, Z); }
-        [Category("Position")] public float Y { get => _marker.World.Y; set => Move(X, value, Z); }
-        [Category("Position")] public float Z { get => _marker.World.Z; set => Move(X, Y, value); }
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float X { get => _engine.ToRaw(_marker.World).X; set => Move(value, Y, Z); }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float Y { get => _engine.ToRaw(_marker.World).Y; set => Move(X, value, Z); }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float Z { get => _engine.ToRaw(_marker.World).Z; set => Move(X, Y, value); }
 
         [Category("Appearance")]
         public string Label { get => _marker.Label; set { _marker.WithLabel(value); _engine.Render(); } }
@@ -300,7 +316,7 @@ namespace SimpleDrawingEngine
 
         private void Move(float x, float y, float z)
         {
-            _marker.MoveTo(new Vector3(x, y, z));
+            _marker.MoveTo(_engine.ToLocal(new Vector3(x, y, z)));
             _engine.Render();
         }
     }

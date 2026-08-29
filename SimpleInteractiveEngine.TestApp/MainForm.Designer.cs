@@ -40,8 +40,10 @@
             toolStripButton3D2Dview = new ToolStripButton();
             toolStripSeparator2 = new ToolStripSeparator();
             toolStripButtonFullZoom = new ToolStripButton();
+            toolStripButtonOpenBackGroundImage = new ToolStripButton();
             imageList1 = new ImageList(components);
             statusStrip1 = new StatusStrip();
+            toolStripButton1 = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -59,7 +61,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripSeparator1, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripSeparator1, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom, toolStripButton1 });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -139,6 +141,16 @@
             toolStripButtonFullZoom.Text = "toolStripButton1";
             toolStripButtonFullZoom.Click += toolStripButtonFullZoom_Click;
             // 
+            // toolStripButtonOpenBackGroundImage
+            // 
+            toolStripButtonOpenBackGroundImage.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonOpenBackGroundImage.Image = (Image)resources.GetObject("toolStripButtonOpenBackGroundImage.Image");
+            toolStripButtonOpenBackGroundImage.ImageTransparentColor = Color.Magenta;
+            toolStripButtonOpenBackGroundImage.Name = "toolStripButtonOpenBackGroundImage";
+            toolStripButtonOpenBackGroundImage.Size = new Size(36, 36);
+            toolStripButtonOpenBackGroundImage.Text = "toolStripButton1";
+            toolStripButtonOpenBackGroundImage.Click += toolStripButtonOpenBackGroundImage_Click;
+            // 
             // imageList1
             // 
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
@@ -154,6 +166,15 @@
             statusStrip1.Size = new Size(800, 22);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripButton1
+            // 
+            toolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButton1.Image = (Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new Size(36, 36);
+            toolStripButton1.Text = "toolStripButton1";
             // 
             // MainForm
             // 
@@ -187,5 +208,7 @@
         private StatusStrip statusStrip1;
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripButton toolStripButtonFullZoom;
+        private ToolStripButton toolStripButtonOpenBackGroundImage;
+        private ToolStripButton toolStripButton1;
     }
 }

@@ -450,9 +450,13 @@ namespace SimpleDrawingEngine
         private void PlacePointAt(PointF screenPos)
         {
             var opts = _placingPointOptions!;
-            var world = ScreenToWorld(screenPos, depth: 0f); // the plane passing through the center of the current view
 
-            var p = AddPoint(world.X, world.Y, world.Z, opts.Label, opts.Brush, opts.Pen, opts.Size, opts.Shape,
+            // ScreenToWorld already returns a LOCAL-space coordinate (no offset needed - that's the point
+            // of it). AddPoint expects RAW coordinates and applies SetLocalOrigin()'s offset itself, so we
+            // convert back to raw here first - otherwise the offset would be applied twice.
+            var raw = ToRaw(ScreenToWorld(screenPos, depth: 0f));
+
+            var p = AddPoint(raw.X, raw.Y, raw.Z, opts.Label, opts.Brush, opts.Pen, opts.Size, opts.Shape,
                 opts.Selectable, opts.Draggable, opts.HoverEnabled);
 
             PointPlaced?.Invoke(this, p);
@@ -467,9 +471,11 @@ namespace SimpleDrawingEngine
         private void PlaceImageAt(PointF screenPos)
         {
             var opts = _placingImageOptions!;
-            var world = ScreenToWorld(screenPos, depth: 0f);
 
-            var marker = AddImage(opts.Image, world.X, world.Y, world.Z, opts.Label, opts.Width, opts.Height,
+            // Same reasoning as PlacePointAt - ScreenToWorld returns local space, AddImage expects raw.
+            var raw = ToRaw(ScreenToWorld(screenPos, depth: 0f));
+
+            var marker = AddImage(opts.Image, raw.X, raw.Y, raw.Z, opts.Label, opts.Width, opts.Height,
                 opts.Selectable, opts.Draggable, opts.HoverEnabled);
             marker.WithScaleWithZoom(opts.ScaleWithZoom);
             Render();

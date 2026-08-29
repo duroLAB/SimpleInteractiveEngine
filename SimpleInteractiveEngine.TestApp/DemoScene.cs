@@ -12,9 +12,14 @@ namespace SimpleDrawingEngine
         public static void Build(ActiveCanvas engine)
         {
 
-            Image img = Image.FromFile("process_unit200.emf");
+            //Image img = Image.FromFile("process_unit200.emf");
+            ///Image img = Image.FromFile("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif");
+            
+            //engine.SetBackgroundImageFromGeoTiff("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif", maxPixelDimension: 3000);
+            engine.SetBackgroundImageFromGeoTiff("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif", maxPixelDimension: null);
 
-            engine.SetBackgroundImage(img, -30, +30, 130);
+            
+            //            engine.SetBackgroundImage(img, 0, 0, 130);
 
             // =====================================================================
             //  1. POINT - the simplest case

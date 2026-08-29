@@ -19,6 +19,13 @@ namespace SimpleInteractiveEngine.TestApp
         private void Form1_Load(object sender, EventArgs e)
         {
             //DemoScene.Build(engine);
+           
+
+         /*   // odteraz zadávaš VŠETKO v surových S-JTSK súradniciach - engine si sám odpočíta offset
+            engine.SetBackgroundImageFromGeoTiff(@"D:\TestGisData\slovnaftOrto\BRATISLAVA_7-2_BL.tif");
+            engine.AddPoint(-569500f, -1283200f, 0f, "Bod A"); // reálna S-JTSK súradnica, žiadne prepočítavanie naspamäť
+
+            engine.ZoomToFullExtent();*/
 
             toolStripButton3D2Dview.Image = imageList1.Images[1];
 
@@ -29,7 +36,7 @@ namespace SimpleInteractiveEngine.TestApp
 
             engine.PointDoubleClicked += (s, p) =>
             {
-                var grid = engine.CreatePropertyGrid(p, hiddenProperties: new[] { "Id", "HoverEnabled", "Draggable","X" ,"Label"});
+                var grid = engine.CreatePropertyGrid(p, hiddenProperties: new[] { "Id", "HoverEnabled", "Draggable" });
                 // zostane len: X, Y, Z, Label, ShowLabel, Shape, Size, Color, Selectable
 
                 using var dlg = new Form { Text = "Point properties", Width = 320, Height = 380 };
@@ -48,13 +55,13 @@ namespace SimpleInteractiveEngine.TestApp
                 var visible = engine.GetVisibleWorldBounds(); // orezanie – kresli len to, čo je vidno
 
                 using var wallPen = new Pen(Color.Black, 1.5f);
-                 
-                  //  if (!visible.IntersectsWith(line.Bounds)) continue; // preskoč, čo je mimo obrazovky
 
-                    var p1 = engine.Project(new Vector3(5, 20, 0));
-                    var p2 = engine.Project(new Vector3(5, 30, 0));
-                    e.Graphics.DrawLine(wallPen, p1, p2);
-               
+                //  if (!visible.IntersectsWith(line.Bounds)) continue; // preskoč, čo je mimo obrazovky
+
+                var p1 = engine.Project(new Vector3(5, 20, 0));
+                var p2 = engine.Project(new Vector3(5, 30, 0));
+                e.Graphics.DrawLine(wallPen, p1, p2);
+
             };
         }
 
@@ -63,7 +70,7 @@ namespace SimpleInteractiveEngine.TestApp
             var grid = engine.CreatePropertyGrid(item);
             if (grid == null) return; // neznámy typ
 
-            
+
 
             using var dlg = new Form { Text = "Properties", Width = 320, Height = 420, StartPosition = FormStartPosition.CenterParent };
             dlg.Controls.Add(grid); // grid má Dock = Fill, netreba nič ďalšie
@@ -72,7 +79,7 @@ namespace SimpleInteractiveEngine.TestApp
 
         private void toolStripButtonAddPoint_Click(object sender, EventArgs e)
         {
-            // pictureBox1.Cursor = CreatePointCursor();
+
             engine.StartPlacingPoints(label: "New Point", brush: new SolidBrush(Color.Crimson), shape: ActiveCanvas.PointShape.Diamond, size: 8f, continuous: false);
         }
 
@@ -132,8 +139,13 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButtonFullZoom_Click(object sender, EventArgs e)
         {
             engine.ZoomToFullExtent();           // 10% okraj (default)
-         //   engine.ZoomToFullExtent(0f);         // presne na okraj, bez rezervy
-         //   engine.ZoomToFullExtent(0.25f);      // väčší okraj
+                                                 //   engine.ZoomToFullExtent(0f);         // presne na okraj, bez rezervy
+                                                 //   engine.ZoomToFullExtent(0.25f);      // väčší okraj
+        }
+
+        private void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
+        {
+            BackgroundImageOpener.Show(this, engine);
         }
     }
 }

@@ -194,6 +194,41 @@ namespace SimpleDrawingEngine
         /// <summary>Click on an icon/image.</summary>
         public event EventHandler<ImageMarker>? ImageClicked;
 
+        /// <summary>Double-click on a point - fires in addition to PointClicked (which fires on both clicks
+        /// of the double-click). Typical use: open a properties dialog (see CreatePropertyGrid()).</summary>
+        public event EventHandler<Point3D>? PointDoubleClicked;
+
+        /// <summary>Double-click on a polyline's line. See PointDoubleClicked.</summary>
+        public event EventHandler<Polyline>? PolylineDoubleClicked;
+
+        /// <summary>Double-click inside a polygon's area. See PointDoubleClicked.</summary>
+        public event EventHandler<Polygon>? PolygonDoubleClicked;
+
+        /// <summary>Double-click on an icon/image. See PointDoubleClicked.</summary>
+        public event EventHandler<ImageMarker>? ImageDoubleClicked;
+
+        /// <summary>
+        /// Fires during Render(), right after the background image layer - lets the host draw an arbitrary
+        /// vector background (e.g. a parsed DXF drawing) directly into the canvas, respecting the current
+        /// pan/zoom/rotation. Use Project() (already public) to convert your own world-space coordinates to
+        /// screen positions; use GetVisibleWorldBounds() to cull entities outside the current viewport.
+        ///
+        ///     engine.CustomBackgroundPaint += (s, e) =>
+        ///     {
+        ///         var visible = engine.GetVisibleWorldBounds();
+        ///         foreach (var line in dxfDocument.Lines.Where(l => visible.IntersectsWith(l.Bounds)))
+        ///         {
+        ///             var p1 = engine.Project(new Vector3(line.X1, line.Y1, 0));
+        ///             var p2 = engine.Project(new Vector3(line.X2, line.Y2, 0));
+        ///             e.Graphics.DrawLine(myPen, p1, p2);
+        ///         }
+        ///     };
+        ///
+        /// Drawn before the ground grid and all engine entities (points/polylines/polygons/icons stay
+        /// visible and interactive on top of it), and after the raster background image, if any is set.
+        /// </summary>
+        public event EventHandler<CanvasPaintEventArgs>? CustomBackgroundPaint;
+
         /// <summary>Fires repeatedly while a point is being dragged (e.g. for live-updating a properties panel).</summary>
         public event EventHandler<Point3D>? PointMoved;
 
@@ -258,5 +293,13 @@ namespace SimpleDrawingEngine
                 _pictureBox.HandleCreated += (s, e) => RebuildBuffer();
         }
         #endregion
+    }
+
+    /// <summary>Event args for ActiveCanvas.CustomBackgroundPaint - just the Graphics to draw into.
+    /// Convert your own world-space coordinates via the engine's public Project() method.</summary>
+    public class CanvasPaintEventArgs : EventArgs
+    {
+        public Graphics Graphics { get; }
+        internal CanvasPaintEventArgs(Graphics graphics) => Graphics = graphics;
     }
 }

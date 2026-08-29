@@ -53,8 +53,14 @@ namespace SimpleDrawingEngine
                 {
                     Select(hit);
                     PointClicked?.Invoke(this, hit);
+                    if (e.Clicks >= 2) PointDoubleClicked?.Invoke(this, hit);
 
-                    if (AllowDragPoints && hit.Draggable)
+                    // Only arm dragging on a plain single click - not on the second click of a double-click,
+                    // where a handler (e.g. opening a properties dialog) may have just run a modal ShowDialog()
+                    // above. In that case the mouse button was released over the dialog, not over this
+                    // PictureBox, so our OnMouseUp never fires for it - starting a drag here would leave it
+                    // "stuck" and jump the point on the next mouse move after the dialog closes.
+                    if (e.Clicks < 2 && AllowDragPoints && hit.Draggable)
                     {
                         _draggingPoint = hit;
                         Project(hit.World, out _draggingDepth); // remember the point's original "depth"
@@ -68,8 +74,9 @@ namespace SimpleDrawingEngine
                 {
                     Select(hitImage);
                     ImageClicked?.Invoke(this, hitImage);
+                    if (e.Clicks >= 2) ImageDoubleClicked?.Invoke(this, hitImage);
 
-                    if (AllowDragPoints && hitImage.Draggable)
+                    if (e.Clicks < 2 && AllowDragPoints && hitImage.Draggable)
                     {
                         _draggingImage = hitImage;
                         Project(hitImage.World, out _draggingImageDepth);
@@ -83,6 +90,7 @@ namespace SimpleDrawingEngine
                 {
                     Select(hitLine);
                     PolylineClicked?.Invoke(this, hitLine);
+                    if (e.Clicks >= 2) PolylineDoubleClicked?.Invoke(this, hitLine);
                     _isRotating = false;
                     _dragStart = e.Location;
                     return;
@@ -93,6 +101,7 @@ namespace SimpleDrawingEngine
                 {
                     Select(hitPolygon);
                     PolygonClicked?.Invoke(this, hitPolygon);
+                    if (e.Clicks >= 2) PolygonDoubleClicked?.Invoke(this, hitPolygon);
                     _isRotating = false;
                     _dragStart = e.Location;
                     return;
@@ -109,6 +118,31 @@ namespace SimpleDrawingEngine
 
         private void OnMouseMove(object? sender, MouseEventArgs e)
         {
+            // Safety net: if a click handler opened a modal dialog (e.g. ShowDialog() from
+            // PointClicked/PointDoubleClicked), the mouse button gets released over that dialog, not over
+            // this PictureBox - so our OnMouseUp never fires for it, and we'd otherwise be left thinking a
+            // drag/pan/rotate is still in progress. Cross-check against the button's actual current state
+            // (Control.MouseButtons reflects reality regardless of which control the up-event landed on).
+            if (_draggingPoint != null && (Control.MouseButtons & MouseButtons.Left) == 0)
+            {
+                _draggingPoint = null;
+                _pictureBox.Cursor = Cursors.Default;
+            }
+            if (_draggingImage != null && (Control.MouseButtons & MouseButtons.Left) == 0)
+            {
+                _draggingImage = null;
+                _pictureBox.Cursor = Cursors.Default;
+            }
+            if (_isPanning && (Control.MouseButtons & (MouseButtons.Right | MouseButtons.Middle)) == 0)
+            {
+                _isPanning = false;
+                _pictureBox.Cursor = Cursors.Default;
+            }
+            if (_isRotating && (Control.MouseButtons & MouseButtons.Left) == 0)
+            {
+                _isRotating = false;
+            }
+
             if (_drawingPolyline != null || _drawingPolygon != null)
             {
                 _drawingPreviewScreenPos = e.Location;

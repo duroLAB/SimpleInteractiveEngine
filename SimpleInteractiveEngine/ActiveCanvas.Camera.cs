@@ -601,6 +601,32 @@ namespace SimpleDrawingEngine
             return (rotated.X, rotated.Z);
         }
 
+        /// <summary>
+        /// Approximate world-space rectangle currently visible in the viewport (at world Z = 0). Useful
+        /// inside a CustomBackgroundPaint handler to skip drawing entities that are off-screen anyway -
+        /// important for large vector backgrounds (e.g. a parsed DXF drawing) with many entities.
+        /// Returns RectangleF.Empty before the canvas has a size yet.
+        /// </summary>
+        public RectangleF GetVisibleWorldBounds()
+        {
+            if (_buffer == null) return RectangleF.Empty;
+
+            var corners = new[]
+            {
+                ScreenToWorld(new PointF(0, 0), 0f),
+                ScreenToWorld(new PointF(_buffer.Width, 0), 0f),
+                ScreenToWorld(new PointF(0, _buffer.Height), 0f),
+                ScreenToWorld(new PointF(_buffer.Width, _buffer.Height), 0f),
+            };
+
+            float minX = corners.Min(c => c.X);
+            float maxX = corners.Max(c => c.X);
+            float minY = corners.Min(c => c.Y);
+            float maxY = corners.Max(c => c.Y);
+
+            return new RectangleF(minX, minY, maxX - minX, maxY - minY);
+        }
+
         private static float DegToRad(float deg) => deg * (float)Math.PI / 180f;
         // ±90° is completely safe mathematically (no division by zero anywhere in Project/ScreenToWorld),
         // and ShowTopView/ShowFrontView need it to be exact - otherwise a small "slip" appears between Y and Z

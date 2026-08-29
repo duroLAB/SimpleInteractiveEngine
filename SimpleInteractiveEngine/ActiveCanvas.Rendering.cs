@@ -81,6 +81,7 @@ namespace SimpleDrawingEngine
                 g.Clear(Color.White);
 
                 DrawBackgroundImage(g);
+                CustomBackgroundPaint?.Invoke(this, new CanvasPaintEventArgs(g));
                 DrawGroundGrid(g);
                 DrawAxes(g);
                 DrawPolygonFills(g);
@@ -181,7 +182,7 @@ namespace SimpleDrawingEngine
         {
             using var defaultPen = new Pen(DefaultLineColor, 2f);
             using var selectionPen = new Pen(Color.FromArgb(SelectionHighlightAlpha, SelectedPointColor), 6f)
-                { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            { StartCap = LineCap.Round, EndCap = LineCap.Round };
 
             foreach (var poly in Polylines)
             {

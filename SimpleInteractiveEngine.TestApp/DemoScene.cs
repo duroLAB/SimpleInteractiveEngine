@@ -11,6 +11,11 @@ namespace SimpleDrawingEngine
     {
         public static void Build(ActiveCanvas engine)
         {
+
+            Image img = Image.FromFile("process_unit200.emf");
+
+            engine.SetBackgroundImage(img, -30, +30, 130);
+
             // =====================================================================
             //  1. POINT - the simplest case
             // =====================================================================

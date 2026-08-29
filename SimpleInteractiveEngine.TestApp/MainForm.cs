@@ -1,6 +1,8 @@
 using SimpleDrawingEngine;
 using SimpleInteractiveEngine;
+using System.Numerics;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace SimpleInteractiveEngine.TestApp
 {
@@ -16,16 +18,57 @@ namespace SimpleInteractiveEngine.TestApp
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            DemoScene.Build(engine);
+            //DemoScene.Build(engine);
 
             toolStripButton3D2Dview.Image = imageList1.Images[1];
 
             this.KeyPreview = true;
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) engine.CancelDrawing(); };
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) engine.FinishDrawing(); };
+
+
+            engine.PointDoubleClicked += (s, p) =>
+            {
+                var grid = engine.CreatePropertyGrid(p, hiddenProperties: new[] { "Id", "HoverEnabled", "Draggable","X" ,"Label"});
+                // zostane len: X, Y, Z, Label, ShowLabel, Shape, Size, Color, Selectable
+
+                using var dlg = new Form { Text = "Point properties", Width = 320, Height = 380 };
+                dlg.Controls.Add(grid);
+                dlg.ShowDialog(this);
+            };
+
+
+            engine.PolylineDoubleClicked += (s, pl) => ShowPropertyDialog(pl);
+            engine.PolygonDoubleClicked += (s, pg) => ShowPropertyDialog(pg);
+            engine.ImageDoubleClicked += (s, im) => ShowPropertyDialog(im);
+
+
+            engine.CustomBackgroundPaint += (s, e) =>
+            {
+                var visible = engine.GetVisibleWorldBounds(); // orezanie – kresli len to, čo je vidno
+
+                using var wallPen = new Pen(Color.Black, 1.5f);
+                 
+                  //  if (!visible.IntersectsWith(line.Bounds)) continue; // preskoč, čo je mimo obrazovky
+
+                    var p1 = engine.Project(new Vector3(5, 20, 0));
+                    var p2 = engine.Project(new Vector3(5, 30, 0));
+                    e.Graphics.DrawLine(wallPen, p1, p2);
+               
+            };
         }
 
+        private void ShowPropertyDialog(object item)
+        {
+            var grid = engine.CreatePropertyGrid(item);
+            if (grid == null) return; // neznámy typ
 
+            
+
+            using var dlg = new Form { Text = "Properties", Width = 320, Height = 420, StartPosition = FormStartPosition.CenterParent };
+            dlg.Controls.Add(grid); // grid má Dock = Fill, netreba nič ďalšie
+            dlg.ShowDialog(this);
+        }
 
         private void toolStripButtonAddPoint_Click(object sender, EventArgs e)
         {

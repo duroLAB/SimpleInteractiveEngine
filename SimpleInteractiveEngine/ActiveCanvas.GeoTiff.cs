@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SimpleDrawingEngine
 {
@@ -38,6 +39,10 @@ namespace SimpleDrawingEngine
         /// few thousand pixels anyway, so holding the full original resolution in memory is usually wasted
         /// RAM for a large orthophoto/scan. World-space size is always computed from the ORIGINAL pixel
         /// dimensions first, so georeferencing accuracy is unaffected by the downscale.
+        ///
+        /// This runs entirely on the calling (UI) thread, so it blocks the app for the duration of the
+        /// decode - fine for small files, but for anything on the order of tens of MB, prefer
+        /// SetBackgroundImageFromGeoTiffAsync instead so the UI stays responsive.
         /// </summary>
         /// <returns>True if georeferencing was found and used, false if the fallback was used instead.</returns>
         /// <param name="fallbackWorldWidthMeters">Used when no georeferencing is found and fallbackWorldWidthProvider is null.</param>
@@ -47,6 +52,65 @@ namespace SimpleDrawingEngine
         public bool SetBackgroundImageFromGeoTiff(string filePath, float worldZ = 0f,
             float fallbackWorldWidthMeters = 100f, Func<float>? fallbackWorldWidthProvider = null,
             int? maxPixelDimension = 4000)
+        {
+            var result = LoadGeoImage(filePath, maxPixelDimension);
+
+            if (result.hasGeoreferencing)
+            {
+                SetBackgroundImage(result.image, result.geo.x, result.geo.y, result.geo.width, result.geo.height, worldZ);
+            }
+            else
+            {
+                float width = fallbackWorldWidthProvider?.Invoke() ?? fallbackWorldWidthMeters;
+                SetBackgroundImage(result.image, 0f, 0f, width, worldZ: worldZ);
+            }
+
+            return result.hasGeoreferencing;
+        }
+
+        /// <summary>
+        /// Same as SetBackgroundImageFromGeoTiff, but does the slow file-reading/decoding/downscaling work
+        /// on a background thread - the UI thread (and this engine's PictureBox) stays responsive while a
+        /// large file loads. Automatically shows ShowBusyOverlay(busyMessage) for the duration and hides it
+        /// afterwards (even if loading throws). fallbackWorldWidthProvider, if you pass one, still runs on
+        /// the UI thread after the background decode finishes - safe to show a dialog from it.
+        ///
+        ///     await engine.SetBackgroundImageFromGeoTiffAsync(path,
+        ///         fallbackWorldWidthProvider: () => PromptForWidthMeters(this, path));
+        /// </summary>
+        public async Task<bool> SetBackgroundImageFromGeoTiffAsync(string filePath, float worldZ = 0f,
+            float fallbackWorldWidthMeters = 100f, Func<float>? fallbackWorldWidthProvider = null,
+            int? maxPixelDimension = 4000, string busyMessage = "Loading image...")
+        {
+            ShowBusyOverlay(busyMessage);
+            try
+            {
+                var result = await Task.Run(() => LoadGeoImage(filePath, maxPixelDimension));
+
+                if (result.hasGeoreferencing)
+                {
+                    SetBackgroundImage(result.image, result.geo.x, result.geo.y, result.geo.width, result.geo.height, worldZ);
+                }
+                else
+                {
+                    float width = fallbackWorldWidthProvider?.Invoke() ?? fallbackWorldWidthMeters;
+                    SetBackgroundImage(result.image, 0f, 0f, width, worldZ: worldZ);
+                }
+
+                return result.hasGeoreferencing;
+            }
+            finally
+            {
+                HideBusyOverlay();
+            }
+        }
+
+        /// <summary>
+        /// The actual file-reading/decoding/downscaling/georeferencing-lookup work, with no dependency on
+        /// any engine/UI state - safe to run on a background thread via Task.Run (see the Async method above).
+        /// </summary>
+        private static (Image image, (float x, float y, float width, float height) geo, bool hasGeoreferencing)
+            LoadGeoImage(string filePath, int? maxPixelDimension)
         {
             Bitmap original;
             using (var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
@@ -65,17 +129,7 @@ namespace SimpleDrawingEngine
                 original.Dispose(); // only the downscaled copy is kept from here on
             }
 
-            if (hasGeoreferencing)
-            {
-                SetBackgroundImage(forDrawing, geo.x, geo.y, geo.width, geo.height, worldZ);
-            }
-            else
-            {
-                float width = fallbackWorldWidthProvider?.Invoke() ?? fallbackWorldWidthMeters;
-                SetBackgroundImage(forDrawing, 0f, 0f, width, worldZ: worldZ);
-            }
-
-            return hasGeoreferencing;
+            return (forDrawing, geo, hasGeoreferencing);
         }
 
         private static Bitmap DownscaleForDisplay(Bitmap source, int maxDimension)

@@ -1,16 +1,17 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SimpleDrawingEngine
 {
     /// <summary>
     /// Example "Open background image" button handler for the host application. Wire it up like:
-    ///     btnOpenBackground.Click += (s, e) => BackgroundImageOpener.Show(this, engine);
+    ///     btnOpenBackground.Click += async (s, e) => await BackgroundImageOpener.ShowAsync(this, engine);
     /// </summary>
     public static class BackgroundImageOpener
     {
-        public static void Show(IWin32Window owner, ActiveCanvas engine)
+        public static async Task ShowAsync(IWin32Window owner, ActiveCanvas engine)
         {
             using var dialog = new OpenFileDialog
             {
@@ -28,14 +29,14 @@ namespace SimpleDrawingEngine
 
             try
             {
-                // SetBackgroundImageFromGeoTiff checks for a sidecar world file (.tfw/.tifw/.wld/...) and,
-                // for TIFFs, embedded GeoTIFF tags too - it works the same way regardless of the file's
-                // extension, so calling it here is fine even for a plain .png/.jpg (it will just come back
-                // with hasGeoreferencing = false unless a matching world file sits next to it).
+                // The Async variant decodes the file on a background thread and shows engine's built-in
+                // busy overlay for the duration, so the UI (and the canvas itself) stays responsive instead
+                // of freezing for the few seconds a large TIFF can take to decode.
                 //
-                // fallbackWorldWidthProvider only runs if no georeferencing was found at all - lazily, so
-                // a normal GeoTIFF never bothers the user with this dialog.
-                bool wasGeoreferenced = engine.SetBackgroundImageFromGeoTiff(
+                // fallbackWorldWidthProvider only runs if no georeferencing was found at all (after the
+                // background decode completes, back on this UI thread) - lazily, so a normal GeoTIFF never
+                // bothers the user with this dialog.
+                bool wasGeoreferenced = await engine.SetBackgroundImageFromGeoTiffAsync(
                     path,
                     fallbackWorldWidthProvider: () => PromptForWidthMeters(owner, path));
 

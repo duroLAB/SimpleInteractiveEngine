@@ -19,13 +19,13 @@ namespace SimpleInteractiveEngine.TestApp
         private void Form1_Load(object sender, EventArgs e)
         {
             //DemoScene.Build(engine);
-           
 
-         /*   // odteraz zadávaš VŠETKO v surových S-JTSK súradniciach - engine si sám odpočíta offset
-            engine.SetBackgroundImageFromGeoTiff(@"D:\TestGisData\slovnaftOrto\BRATISLAVA_7-2_BL.tif");
-            engine.AddPoint(-569500f, -1283200f, 0f, "Bod A"); // reálna S-JTSK súradnica, žiadne prepočítavanie naspamäť
 
-            engine.ZoomToFullExtent();*/
+            /*   // odteraz zadávaš VŠETKO v surových S-JTSK súradniciach - engine si sám odpočíta offset
+               engine.SetBackgroundImageFromGeoTiff(@"D:\TestGisData\slovnaftOrto\BRATISLAVA_7-2_BL.tif");
+               engine.AddPoint(-569500f, -1283200f, 0f, "Bod A"); // reálna S-JTSK súradnica, žiadne prepočítavanie naspamäť
+
+               engine.ZoomToFullExtent();*/
 
             toolStripButton3D2Dview.Image = imageList1.Images[1];
 
@@ -97,24 +97,20 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButton3D2Dview_Click(object sender, EventArgs e)
         {
             float pd = engine.PitchDegrees;
-
             if (pd >= 89f && pd < 91)
             {
                 toolStripButton3D2Dview.Image = imageList1.Images[0];
                 engine.ShowIsometricView();
                 engine.AllowFreeRotate = true;
+                engine.ZoomToFullExtent();
             }
             else
             {
                 toolStripButton3D2Dview.Image = imageList1.Images[1];
                 engine.ShowTopView();
                 engine.AllowFreeRotate = false;
+                engine.ZoomToFullExtent();
             }
-
-
-
-
-
         }
 
         private void toolStripButtonAddIcon_Click(object sender, EventArgs e)
@@ -143,9 +139,17 @@ namespace SimpleInteractiveEngine.TestApp
                                                  //   engine.ZoomToFullExtent(0.25f);      // väčší okraj
         }
 
-        private void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
+        private async void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
         {
-            BackgroundImageOpener.Show(this, engine);
+           // BackgroundImageOpener.Show(this, engine);
+            await BackgroundImageOpener.ShowAsync(this, engine);
+        }
+
+        private void toolStripButtonClearAll_Click(object sender, EventArgs e)
+        {
+            engine.ShowBusyOverlay("Clearing all items...");
+           /* engine.Clear();
+            engine.SetLocalOrigin(0, 0);*/
         }
     }
 }

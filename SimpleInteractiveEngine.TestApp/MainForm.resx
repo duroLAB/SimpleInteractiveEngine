@@ -179,6 +179,17 @@
         YII=
 </value>
   </data>
+  <data name="toolStripButtonClearAll.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
+        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAEZSURBVFhH7ZW9EoIwDMd5BN9AF6GjoyOjGwr4rI7cQXuM
+        jIw+hqMSL+kVrMpH1FP7u8sdSdPkf6EFz+EYwjzKZiJV50cGOZg+niBRla34FIOaWP45Hxfgx0r4ab6h
+        zcu9XI0x2u/H+RZqYvl+BFG2oAIYGgzth1oY6o8TYBMQJEUoEnlE9waRyhrODrq8AsxDZRPRujm7Yg0x
+        8tkm0DQ+6KLGtWpfW5lh+DVnoCvCbN48l5h2Rcc5BQCmCDJzIoRe4xYAiESdaB2eMdyC1tkFtN85NnnX
+        BDrvvApSVZJvHkBA53EJ6DbHsHdPhM7lEAB3Wxe0jlvWtE4/Hp3PN4EitDUnQAR8sNDlFzAUJ+B3BEy1
+        7xTg+BM87wKXoVfCWjRsuwAAAABJRU5ErkJggg==
+</value>
+  </data>
   <data name="toolStripButton3D2Dview.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
@@ -197,17 +208,6 @@
         RCPsgzkkTDYvtzjDKIa6923T+5UFFTVslkTuQiVSTUvXjn5jQUUNmyWRu1CJnAQGPx+Dipp0zm0BbD3O
         /wTCOjcYV7gAQ33gAHuQGhMwARN4VYAdCOvcYNz1g4oUeJr/CKQfCVTUpHPuCyRBRQ2bJaECn39KDeMb
         nNsBs8sICwc6XlwAAAAASUVORK5CYII=
-</value>
-  </data>
-  <data name="toolStripButton1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-    <value>
-        iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
-        YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAD/SURBVFhH7dI9CsJAEIbhnEMvYOEpcgLP4R0EGy9gaaWN
-        YOEVLKzSaGGhrX+Fxv8m7cq3MBKWXbOrGTeogRfCTsg8kARJkgifFQcQhuFHKy7germx9v2A024rpp2a
-        GDdKMtzjjObsgPTyNILm7AB1ORWv5nLuDUBzdoD3T8DyE0bLs0w3c80ZMFwcRaW/keWBcAJ0ZwdR7q0f
-        5YGwBqjL80JYAdqTWLucegeRCaiPdtqlaq8ingKqzYF2maksBGbq3AhwXU6ZEDjDDOF/onMjQPdy21QE
-        LU8/QwgWACKEbjnVivZ8AITFpuUUPjUbwDYgvALQH1A8gK/8A378CoI73hfpokc6/8UAAAAASUVORK5C
-        YII=
 </value>
   </data>
   <metadata name="imageList1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

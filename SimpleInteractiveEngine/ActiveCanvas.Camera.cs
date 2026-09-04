@@ -376,11 +376,12 @@ namespace SimpleDrawingEngine
             }
         }
 
-        /// <summary>Cancels drawing/placement in progress - removes the in-progress shape as well as the
-        /// vertices the engine created for it (vertices "snapped" onto existing points are left untouched).</summary>
+        /// <summary>Cancels drawing/placement/measuring in progress - removes the in-progress shape as well
+        /// as the vertices the engine created for it (vertices "snapped" onto existing points are left
+        /// untouched), and clears any measurement currently shown.</summary>
         public void CancelDrawing()
         {
-            if (!IsDrawing) return;
+            if (!IsDrawing && !_measuringActive && _measureStart == null) return;
 
             if (_drawingPolyline != null) { Polylines.Remove(_drawingPolyline); _drawingPolyline = null; }
             if (_drawingPolygon != null) { Polygons.Remove(_drawingPolygon); _drawingPolygon = null; }
@@ -390,10 +391,56 @@ namespace SimpleDrawingEngine
             foreach (var v in _drawingOwnedVertices) Points.Remove(v);
             _drawingOwnedVertices.Clear();
             _drawingPreviewScreenPos = null;
+
+            _measuringActive = false;
+            _measureStart = null;
+            _measureEnd = null;
+            _measurePreviewScreenPos = null;
+
             _pictureBox.Cursor = Cursors.Default;
 
             Render();
             DrawingCancelled?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Starts (or restarts) the measuring tool - click one point, then a second point, to draw a line
+        /// between them and see the distance (a live "rubber band" with a running distance label follows
+        /// the cursor after the first click). Mutually exclusive with drawing/placing modes - calling this
+        /// cancels any of those, and vice versa.
+        ///
+        /// Calling this again (e.g. from a toggle button, the same way you'd re-trigger point placement)
+        /// discards any previous measurement and starts fresh from the first click. The finished
+        /// measurement (line + distance label) stays visible after the second click until you call this
+        /// again or CancelDrawing() - IsMeasuring itself goes back to false once the second point is placed.
+        /// </summary>
+        public void StartMeasuring()
+        {
+            CancelDrawing();
+
+            _measuringActive = true;
+            _pictureBox.Cursor = DrawingCursor;
+            Render();
+        }
+
+        private void AddMeasurePoint(PointF screenPos)
+        {
+            var world = ScreenToWorld(screenPos, depth: 0f); // the plane passing through the center of the current view
+
+            if (_measureStart == null)
+            {
+                _measureStart = world;
+                Render();
+                return;
+            }
+
+            _measureEnd = world;
+            _measuringActive = false; // tool goes idle - StartMeasuring() again for another measurement
+            _measurePreviewScreenPos = null;
+            _pictureBox.Cursor = Cursors.Default;
+            Render();
+
+            MeasurementCompleted?.Invoke(this, Vector3.Distance(_measureStart.Value, _measureEnd.Value));
         }
 
         /// <summary>

@@ -92,6 +92,7 @@ namespace SimpleDrawingEngine
                 DrawPolygonLabels(g);
                 DrawImageLabels(g);
                 DrawDrawingPreview(g);
+                DrawMeasurement(g);
                 DrawScaleBar(g, _buffer.Width, _buffer.Height);
             }
 
@@ -457,6 +458,47 @@ namespace SimpleDrawingEngine
                 using var closePen = new Pen(Color.FromArgb(90, Color.Gray), 1f) { DashStyle = DashStyle.Dot };
                 g.DrawLine(closePen, cursor, firstScreen);
             }
+        }
+
+        /// <summary>Draws the measuring tool's line (live preview after the first click, solid once
+        /// finished) with a running/final distance label - reuses FormatMeters/DrawLabelWithBackdrop from
+        /// the scale bar so the number formatting is consistent everywhere in the engine.</summary>
+        private void DrawMeasurement(Graphics g)
+        {
+            if (_measureStart == null) return;
+
+            var startScreen = Project(_measureStart.Value);
+
+            Vector3 endWorld;
+            PointF endScreen;
+            bool isFinished = _measureEnd != null;
+
+            if (isFinished)
+            {
+                endWorld = _measureEnd!.Value;
+                endScreen = Project(endWorld);
+            }
+            else if (_measurePreviewScreenPos != null)
+            {
+                endScreen = _measurePreviewScreenPos.Value;
+                endWorld = ScreenToWorld(endScreen, depth: 0f); // approximate - only used for the live label
+            }
+            else
+            {
+                return; // first point placed, but the cursor hasn't moved yet
+            }
+
+            using var linePen = new Pen(Color.DeepPink, 2f) { DashStyle = isFinished ? DashStyle.Solid : DashStyle.Dash };
+            g.DrawLine(linePen, startScreen, endScreen);
+
+            const float markerRadius = 4f;
+            using var markerBrush = new SolidBrush(Color.DeepPink);
+            g.FillEllipse(markerBrush, startScreen.X - markerRadius, startScreen.Y - markerRadius, markerRadius * 2, markerRadius * 2);
+            g.FillEllipse(markerBrush, endScreen.X - markerRadius, endScreen.Y - markerRadius, markerRadius * 2, markerRadius * 2);
+
+            float distance = Vector3.Distance(_measureStart.Value, endWorld);
+            var midScreen = new PointF((startScreen.X + endScreen.X) / 2f, (startScreen.Y + endScreen.Y) / 2f);
+            DrawLabelWithBackdrop(g, FormatMeters(distance), midScreen);
         }
 
         #endregion

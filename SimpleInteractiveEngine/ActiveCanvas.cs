@@ -183,6 +183,25 @@ namespace SimpleDrawingEngine
         /// <summary>True if the StartPlacingImages() mode is currently active.</summary>
         public bool IsPlacingImages => _placingImageOptions != null;
 
+        // ---- Measuring tool - click two points to draw a line between them and see the distance ----
+        private bool _measuringActive;
+        private Vector3? _measureStart;
+        private Vector3? _measureEnd;
+        private PointF? _measurePreviewScreenPos;
+
+        /// <summary>True while the measuring tool is actively waiting for a click (StartMeasuring() was
+        /// called and the second point hasn't been placed yet). Becomes false again once the measurement
+        /// is finished - the result stays visible until StartMeasuring() is called again.</summary>
+        public bool IsMeasuring => _measuringActive;
+
+        /// <summary>The current measurement's distance in meters, once both points are placed - null before that.</summary>
+        public float? MeasuredDistance => (_measureStart != null && _measureEnd != null)
+            ? Vector3.Distance(_measureStart.Value, _measureEnd.Value)
+            : (float?)null;
+
+        /// <summary>Fires once the measuring tool's second point is placed, with the measured distance (meters).</summary>
+        public event EventHandler<float>? MeasurementCompleted;
+
         public event EventHandler<Point3D>? PointClicked;
 
         /// <summary>Click on the polyline's line itself (not on one of its vertices - that's handled by PointClicked).</summary>

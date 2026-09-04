@@ -36,14 +36,16 @@
             toolStripButtonAddPolyLine = new ToolStripButton();
             toolStripButtonAddPolygon = new ToolStripButton();
             toolStripButtonAddIcon = new ToolStripButton();
+            toolStripButtonOpenBackGroundImage = new ToolStripButton();
+            toolStripButtonClearAll = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
+            toolStripButtonLengthMeasure = new ToolStripButton();
+            toolStripSeparator3 = new ToolStripSeparator();
             toolStripButton3D2Dview = new ToolStripButton();
             toolStripSeparator2 = new ToolStripSeparator();
             toolStripButtonFullZoom = new ToolStripButton();
-            toolStripButtonOpenBackGroundImage = new ToolStripButton();
             imageList1 = new ImageList(components);
             statusStrip1 = new StatusStrip();
-            toolStripButtonClearAll = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -61,7 +63,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -111,10 +113,45 @@
             toolStripButtonAddIcon.Text = "toolStripButton1";
             toolStripButtonAddIcon.Click += toolStripButtonAddIcon_Click;
             // 
+            // toolStripButtonOpenBackGroundImage
+            // 
+            toolStripButtonOpenBackGroundImage.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonOpenBackGroundImage.Image = (Image)resources.GetObject("toolStripButtonOpenBackGroundImage.Image");
+            toolStripButtonOpenBackGroundImage.ImageTransparentColor = Color.Magenta;
+            toolStripButtonOpenBackGroundImage.Name = "toolStripButtonOpenBackGroundImage";
+            toolStripButtonOpenBackGroundImage.Size = new Size(36, 36);
+            toolStripButtonOpenBackGroundImage.Text = "toolStripButton1";
+            toolStripButtonOpenBackGroundImage.Click += toolStripButtonOpenBackGroundImage_Click;
+            // 
+            // toolStripButtonClearAll
+            // 
+            toolStripButtonClearAll.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonClearAll.Image = (Image)resources.GetObject("toolStripButtonClearAll.Image");
+            toolStripButtonClearAll.ImageTransparentColor = Color.Magenta;
+            toolStripButtonClearAll.Name = "toolStripButtonClearAll";
+            toolStripButtonClearAll.Size = new Size(36, 36);
+            toolStripButtonClearAll.Text = "toolStripButton1";
+            toolStripButtonClearAll.Click += toolStripButtonClearAll_Click;
+            // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
             toolStripSeparator1.Size = new Size(6, 39);
+            // 
+            // toolStripButtonLengthMeasure
+            // 
+            toolStripButtonLengthMeasure.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonLengthMeasure.Image = (Image)resources.GetObject("toolStripButtonLengthMeasure.Image");
+            toolStripButtonLengthMeasure.ImageTransparentColor = Color.Magenta;
+            toolStripButtonLengthMeasure.Name = "toolStripButtonLengthMeasure";
+            toolStripButtonLengthMeasure.Size = new Size(36, 36);
+            toolStripButtonLengthMeasure.Text = "toolStripButton1";
+            toolStripButtonLengthMeasure.Click += toolStripButtonLengthMeasure_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new Size(6, 39);
             // 
             // toolStripButton3D2Dview
             // 
@@ -141,16 +178,6 @@
             toolStripButtonFullZoom.Text = "toolStripButton1";
             toolStripButtonFullZoom.Click += toolStripButtonFullZoom_Click;
             // 
-            // toolStripButtonOpenBackGroundImage
-            // 
-            toolStripButtonOpenBackGroundImage.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonOpenBackGroundImage.Image = (Image)resources.GetObject("toolStripButtonOpenBackGroundImage.Image");
-            toolStripButtonOpenBackGroundImage.ImageTransparentColor = Color.Magenta;
-            toolStripButtonOpenBackGroundImage.Name = "toolStripButtonOpenBackGroundImage";
-            toolStripButtonOpenBackGroundImage.Size = new Size(36, 36);
-            toolStripButtonOpenBackGroundImage.Text = "toolStripButton1";
-            toolStripButtonOpenBackGroundImage.Click += toolStripButtonOpenBackGroundImage_Click;
-            // 
             // imageList1
             // 
             imageList1.ColorDepth = ColorDepth.Depth32Bit;
@@ -166,16 +193,6 @@
             statusStrip1.Size = new Size(800, 22);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
-            // 
-            // toolStripButtonClearAll
-            // 
-            toolStripButtonClearAll.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonClearAll.Image = (Image)resources.GetObject("toolStripButtonClearAll.Image");
-            toolStripButtonClearAll.ImageTransparentColor = Color.Magenta;
-            toolStripButtonClearAll.Name = "toolStripButtonClearAll";
-            toolStripButtonClearAll.Size = new Size(36, 36);
-            toolStripButtonClearAll.Text = "toolStripButton1";
-            toolStripButtonClearAll.Click += toolStripButtonClearAll_Click;
             // 
             // MainForm
             // 
@@ -211,5 +228,7 @@
         private ToolStripButton toolStripButtonFullZoom;
         private ToolStripButton toolStripButtonOpenBackGroundImage;
         private ToolStripButton toolStripButtonClearAll;
+        private ToolStripButton toolStripButtonLengthMeasure;
+        private ToolStripSeparator toolStripSeparator3;
     }
 }

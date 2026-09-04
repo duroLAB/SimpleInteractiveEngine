@@ -27,6 +27,12 @@ namespace SimpleDrawingEngine
 
             if (e.Button == MouseButtons.Left)
             {
+                if (IsMeasuring)
+                {
+                    AddMeasurePoint(e.Location);
+                    return;
+                }
+
                 if (IsPlacingPoints)
                 {
                     PlacePointAt(e.Location);
@@ -149,6 +155,12 @@ namespace SimpleDrawingEngine
                 Render(); // the rubber-band line must follow the cursor even without a button pressed
             }
 
+            if (_measuringActive && _measureStart != null && _measureEnd == null)
+            {
+                _measurePreviewScreenPos = e.Location;
+                Render(); // live distance label must follow the cursor after the first click
+            }
+
             if (_draggingPoint != null)
             {
                 _draggingPoint.MoveTo(ScreenToWorld(e.Location, _draggingDepth));
@@ -203,10 +215,11 @@ namespace SimpleDrawingEngine
             if (_hoverPoint != null) { _hoverPoint = null; changed = true; }
             if (_hoverImage != null) { _hoverImage = null; changed = true; }
             if (_drawingPreviewScreenPos != null) { _drawingPreviewScreenPos = null; changed = true; }
+            if (_measurePreviewScreenPos != null) { _measurePreviewScreenPos = null; changed = true; }
 
             if (changed)
             {
-                if (!IsDrawing)
+                if (!IsDrawing && !_measuringActive)
                     _pictureBox.Cursor = Cursors.Default;
                 Render();
             }
@@ -222,8 +235,8 @@ namespace SimpleDrawingEngine
             _hoverPoint = hitPoint;
             _hoverImage = hitImage;
 
-            // While drawing/placing, DrawingCursor stays put regardless of what's hovered underneath.
-            if (!IsDrawing)
+            // While drawing/placing/measuring, DrawingCursor stays put regardless of what's hovered underneath.
+            if (!IsDrawing && !_measuringActive)
             {
                 bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false);
                 _pictureBox.Cursor = selectable ? Cursors.Hand : Cursors.Default;

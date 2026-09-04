@@ -43,11 +43,15 @@ namespace SimpleInteractiveEngine.TestApp
                 dlg.Controls.Add(grid);
                 dlg.ShowDialog(this);
             };
+            ///
 
 
             engine.PolylineDoubleClicked += (s, pl) => ShowPropertyDialog(pl);
             engine.PolygonDoubleClicked += (s, pg) => ShowPropertyDialog(pg);
             engine.ImageDoubleClicked += (s, im) => ShowPropertyDialog(im);
+
+            
+           // engine.PointPlaced += (s, p) => { engine.ShowBusyOverlay("Saving point...");p.WithBrush(b) };
 
 
             engine.CustomBackgroundPaint += (s, e) =>
@@ -65,6 +69,7 @@ namespace SimpleInteractiveEngine.TestApp
             };
         }
 
+      
         private void ShowPropertyDialog(object item)
         {
             var grid = engine.CreatePropertyGrid(item);
@@ -79,7 +84,6 @@ namespace SimpleInteractiveEngine.TestApp
 
         private void toolStripButtonAddPoint_Click(object sender, EventArgs e)
         {
-
             engine.StartPlacingPoints(label: "New Point", brush: new SolidBrush(Color.Crimson), shape: ActiveCanvas.PointShape.Diamond, size: 8f, continuous: false);
         }
 
@@ -141,15 +145,20 @@ namespace SimpleInteractiveEngine.TestApp
 
         private async void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
         {
-           // BackgroundImageOpener.Show(this, engine);
+            // BackgroundImageOpener.Show(this, engine);
             await BackgroundImageOpener.ShowAsync(this, engine);
         }
 
         private void toolStripButtonClearAll_Click(object sender, EventArgs e)
         {
             engine.ShowBusyOverlay("Clearing all items...");
-           /* engine.Clear();
-            engine.SetLocalOrigin(0, 0);*/
+            /* engine.Clear();
+             engine.SetLocalOrigin(0, 0);*/
+        }
+
+        private void toolStripButtonLengthMeasure_Click(object sender, EventArgs e)
+        {
+            engine.StartMeasuring();
         }
     }
 }

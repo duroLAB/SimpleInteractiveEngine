@@ -254,7 +254,10 @@ namespace SimpleDrawingEngine
             Circle,
             Ellipse,
             Rectangle,
-            RoundedRectangle
+            RoundedRectangle,
+
+            /// <summary>Arbitrary outline defined by ShapeMarker.WithCustomPolygon() - a user-defined set of points.</summary>
+            CustomPolygon
         }
 
         /// <summary>
@@ -282,6 +285,10 @@ namespace SimpleDrawingEngine
             public bool ShowLabel { get; private set; } = true;
             public PointF? LabelOffset { get; private set; }
 
+            /// <summary>Outline points for ShapeType.CustomPolygon, relative to the shape's own center and
+            /// normalized to roughly -0.5..0.5 in both axes - Width/Height then scale this to the actual size.</summary>
+            public IReadOnlyList<PointF>? CustomPoints { get; private set; }
+
             public ShapeMarker(float x, float y, float z = 0f, MarkerShapeType shapeType = MarkerShapeType.Circle, Guid? id = null)
             {
                 Id = id ?? Guid.NewGuid();
@@ -290,6 +297,19 @@ namespace SimpleDrawingEngine
             }
 
             public ShapeMarker WithShapeType(MarkerShapeType shapeType) { ShapeType = shapeType; return this; }
+
+            /// <summary>
+            /// Defines a custom outline as a set of points relative to the shape's own center, normalized
+            /// so the shape roughly spans -0.5..0.5 in both axes (Width/Height then scale it to the actual
+            /// size) - e.g. a diamond: (0,-0.5), (0.5,0), (0,0.5), (-0.5,0). Needs at least 3 points.
+            /// Automatically switches ShapeType to CustomPolygon.
+            /// </summary>
+            public ShapeMarker WithCustomPolygon(IEnumerable<PointF> relativePoints)
+            {
+                CustomPoints = relativePoints.ToList();
+                ShapeType = MarkerShapeType.CustomPolygon;
+                return this;
+            }
 
             /// <summary>Size. In pixels (default), or in meters if ScaleWithZoom = true. If height is
             /// omitted, the shape is as tall as it is wide (a circle instead of an ellipse, a square

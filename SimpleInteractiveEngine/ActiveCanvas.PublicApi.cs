@@ -215,6 +215,40 @@ namespace SimpleDrawingEngine
             return shape;
         }
 
+        /// <summary>
+        /// Adds a shape marker with a user-defined outline - a custom polygon instead of one of the built-in
+        /// circle/ellipse/rectangle/rounded-rectangle types. Like AddShape in every other respect - single
+        /// anchor point, drag-and-drop moves the whole thing at once, no per-vertex editing (unlike
+        /// AddPolygon, whose vertices are independently draggable Point3D objects).
+        ///
+        /// relativePoints define the outline relative to the shape's own center, normalized so it roughly
+        /// spans -0.5..0.5 in both axes - width/height then scale that outline to the actual size:
+        ///
+        ///     // a simple diamond
+        ///     engine.AddCustomShape(5, 3, 0, new[] { (0f,-0.5f), (0.5f,0f), (0f,0.5f), (-0.5f,0f) },
+        ///         label: "Waypoint", brush: new SolidBrush(Color.Gold), width: 30f);
+        /// </summary>
+        public ShapeMarker AddCustomShape(float x, float y, float z, IEnumerable<(float x, float y)> relativePoints,
+            string label = "", Brush? brush = null, Pen? pen = null, float width = 40f, float? height = null,
+            bool selectable = true, bool draggable = true, bool hoverEnabled = true, Guid? id = null)
+        {
+            var local = ToLocal(new Vector3(x, y, z));
+            var shape = new ShapeMarker(local.X, local.Y, local.Z, MarkerShapeType.CustomPolygon, id)
+                .WithCustomPolygon(relativePoints.Select(p => new PointF(p.x, p.y)))
+                .WithSize(width, height)
+                .WithLabel(label)
+                .WithSelectable(selectable)
+                .WithDraggable(draggable)
+                .WithHover(hoverEnabled);
+
+            if (brush != null) shape.WithBrush(brush);
+            if (pen != null) shape.WithPen(pen);
+
+            Shapes.Add(shape);
+            Render();
+            return shape;
+        }
+
         public void Clear()
         {
             Points.Clear();

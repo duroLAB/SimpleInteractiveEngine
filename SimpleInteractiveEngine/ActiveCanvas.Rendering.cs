@@ -458,12 +458,12 @@ namespace SimpleDrawingEngine
                     // Same principle as point/image hover glow - a subtle extra semi-transparent outline of the same shape.
                     var haloRect = RectangleF.Inflate(rect, HoverHaloExtraRadius, HoverHaloExtraRadius);
                     Color haloColor = (sh.Brush as SolidBrush)?.Color ?? DefaultPointColor;
-                    using var haloPath = BuildMarkerShapePath(sh.ShapeType, haloRect, cornerRadius + HoverHaloExtraRadius);
+                    using var haloPath = BuildMarkerShapePath(sh.ShapeType, haloRect, cornerRadius + HoverHaloExtraRadius, sh.CustomPoints);
                     using var haloBrush = new SolidBrush(Color.FromArgb(HoverHaloAlpha, haloColor));
                     g.FillPath(haloBrush, haloPath);
                 }
 
-                using var shapePath = BuildMarkerShapePath(sh.ShapeType, rect, cornerRadius);
+                using var shapePath = BuildMarkerShapePath(sh.ShapeType, rect, cornerRadius, sh.CustomPoints);
 
                 if (sh.Brush != null)
                 {
@@ -487,7 +487,7 @@ namespace SimpleDrawingEngine
                 if (sh.Selected)
                 {
                     var selRect = RectangleF.Inflate(rect, SelectionRingExtraRadius, SelectionRingExtraRadius);
-                    using var selPath = BuildMarkerShapePath(sh.ShapeType, selRect, cornerRadius + SelectionRingExtraRadius);
+                    using var selPath = BuildMarkerShapePath(sh.ShapeType, selRect, cornerRadius + SelectionRingExtraRadius, sh.CustomPoints);
                     using var selectionPen = new Pen(SelectedPointColor, 2f);
                     g.DrawPath(selectionPen, selPath);
                 }
@@ -509,7 +509,8 @@ namespace SimpleDrawingEngine
 
         /// <summary>Builds the GraphicsPath for a shape marker's outline - used consistently for the fill,
         /// outline, hover glow, and selection ring, same principle as BuildShapePath for point shapes.</summary>
-        private static GraphicsPath BuildMarkerShapePath(MarkerShapeType type, RectangleF rect, float cornerRadius)
+        private static GraphicsPath BuildMarkerShapePath(MarkerShapeType type, RectangleF rect, float cornerRadius,
+            IReadOnlyList<PointF>? customPoints = null)
         {
             switch (type)
             {
@@ -522,6 +523,22 @@ namespace SimpleDrawingEngine
                     // Clamp so the corner radius never exceeds half the shorter side (AddArc would otherwise misbehave).
                     float maxRadius = Math.Min(rect.Width, rect.Height) / 2f;
                     return RoundedRect(rect, Math.Max(0f, Math.Min(cornerRadius, maxRadius)));
+
+                case MarkerShapeType.CustomPolygon:
+                    if (customPoints == null || customPoints.Count < 3)
+                        goto case MarkerShapeType.Circle; // no outline defined (yet) - fall back rather than throw
+
+                    // customPoints are normalized to roughly -0.5..0.5 around the shape's own center -
+                    // scale by the rectangle's size and shift to its center to get actual screen coordinates.
+                    float cx = rect.X + rect.Width / 2f;
+                    float cy = rect.Y + rect.Height / 2f;
+                    var scaledPoints = new PointF[customPoints.Count];
+                    for (int i = 0; i < customPoints.Count; i++)
+                        scaledPoints[i] = new PointF(cx + customPoints[i].X * rect.Width, cy + customPoints[i].Y * rect.Height);
+
+                    var customPath = new GraphicsPath();
+                    customPath.AddPolygon(scaledPoints);
+                    return customPath;
 
                 case MarkerShapeType.Ellipse:
                 case MarkerShapeType.Circle:

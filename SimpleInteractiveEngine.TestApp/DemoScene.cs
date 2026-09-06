@@ -106,9 +106,17 @@ namespace SimpleDrawingEngine
 
             // Zaoblený obdĺžnik, škáluje sa so zoomom (skutočná veľkosť vo svete)
             var zone2 = engine.AddShape(10, 5, 0, ActiveCanvas.MarkerShapeType.RoundedRectangle,
-                label: "Zóna", brush: new SolidBrush(Color.FromArgb(80, Color.Orange)),
+                label: "Zóna\nfdfd", brush: new SolidBrush(Color.FromArgb(80, Color.Orange)),
                 pen: new Pen(Color.OrangeRed, 2f), width: 4f, height: 3f);
             zone2.WithScaleWithZoom(true).WithCornerRadius(0.5f);
+
+            var arrow = engine.AddCustomShape(5, 3, 0,
+    new[] { (0f, -0.5f), (0.35f, 0.1f), (0.15f, 0.1f), (0.15f, 0.5f),
+            (-0.15f, 0.5f), (-0.15f, 0.1f), (-0.35f, 0.1f) },
+    label: "Smer",
+    brush: new SolidBrush(Color.DodgerBlue),
+    pen: new Pen(Color.Navy, 1.5f),
+    width: 40f);
         }
 
         /// <summary>Generates a simple "pin" icon (circle + point) directly in code, so the example is

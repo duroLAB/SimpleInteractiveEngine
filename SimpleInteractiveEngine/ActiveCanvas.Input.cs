@@ -107,6 +107,18 @@ namespace SimpleDrawingEngine
                     return;
                 }
 
+                var hitConnector = HitTestConnector(e.Location);
+                if (hitConnector != null)
+                {
+                    Select(hitConnector);
+                    ConnectorClicked?.Invoke(this, hitConnector);
+                    if (e.Clicks >= 2) ConnectorDoubleClicked?.Invoke(this, hitConnector);
+                    // No dragging - a connector has no position of its own, it always follows its two shapes.
+                    _isRotating = false;
+                    _dragStart = e.Location;
+                    return;
+                }
+
                 var hitLine = HitTestPolyline(e.Location);
                 if (hitLine != null)
                 {
@@ -243,6 +255,7 @@ namespace SimpleDrawingEngine
             if (_hoverPoint != null) { _hoverPoint = null; changed = true; }
             if (_hoverImage != null) { _hoverImage = null; changed = true; }
             if (_hoverShape != null) { _hoverShape = null; changed = true; }
+            if (_hoverConnector != null) { _hoverConnector = null; changed = true; }
             if (_drawingPreviewScreenPos != null) { _drawingPreviewScreenPos = null; changed = true; }
             if (_measurePreviewScreenPos != null) { _measurePreviewScreenPos = null; changed = true; }
 
@@ -259,17 +272,20 @@ namespace SimpleDrawingEngine
             var hitPoint = HitTestForHover(location);
             var hitImage = hitPoint == null ? HitTestImageForHover(location) : null; // a point takes priority
             var hitShape = (hitPoint == null && hitImage == null) ? HitTestShapeForHover(location) : null;
+            var hitConnector = (hitPoint == null && hitImage == null && hitShape == null) ? HitTestConnectorForHover(location) : null;
 
-            if (hitPoint == _hoverPoint && hitImage == _hoverImage && hitShape == _hoverShape) return;
+            if (hitPoint == _hoverPoint && hitImage == _hoverImage && hitShape == _hoverShape && hitConnector == _hoverConnector) return;
 
             _hoverPoint = hitPoint;
             _hoverImage = hitImage;
             _hoverShape = hitShape;
+            _hoverConnector = hitConnector;
 
             // While drawing/placing/measuring, DrawingCursor stays put regardless of what's hovered underneath.
             if (!IsDrawing && !_measuringActive)
             {
-                bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false) || (hitShape?.Selectable ?? false);
+                bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false)
+                    || (hitShape?.Selectable ?? false) || (hitConnector?.Selectable ?? false);
                 _pictureBox.Cursor = selectable ? Cursors.Hand : Cursors.Default;
             }
             Render();

@@ -140,6 +140,85 @@ namespace SimpleDrawingEngine
             return null;
         }
 
+        /// <summary>Resolves a LabelAnchor to an exact screen point on a shape's boundary (Center = its own center).</summary>
+        private static PointF ComputeAttachmentScreenPoint(LabelAnchor anchor, PointF center, SizeF size)
+        {
+            float halfW = size.Width / 2f;
+            float halfH = size.Height / 2f;
+
+            return anchor switch
+            {
+                LabelAnchor.TopLeft => new PointF(center.X - halfW, center.Y - halfH),
+                LabelAnchor.Top => new PointF(center.X, center.Y - halfH),
+                LabelAnchor.TopRight => new PointF(center.X + halfW, center.Y - halfH),
+                LabelAnchor.Left => new PointF(center.X - halfW, center.Y),
+                LabelAnchor.Center => center,
+                LabelAnchor.Right => new PointF(center.X + halfW, center.Y),
+                LabelAnchor.BottomLeft => new PointF(center.X - halfW, center.Y + halfH),
+                LabelAnchor.Bottom => new PointF(center.X, center.Y + halfH),
+                LabelAnchor.BottomRight => new PointF(center.X + halfW, center.Y + halfH),
+                _ => center
+            };
+        }
+
+        /// <summary>
+        /// Computes the connector's route as a sequence of screen points, recalculated fresh from both
+        /// shapes' CURRENT positions every call - this is the entire reason drag-and-drop "just works" for
+        /// connectors with no extra tracking code: there's simply nothing cached to go stale.
+        /// Straight = 2 points; Orthogonal = 3 points (horizontal segment, then vertical, to the target).
+        /// </summary>
+        private PointF[] ComputeConnectorRoute(ShapeConnector connector)
+        {
+            var fromSize = connector.From.ComputeScreenSize(_pixelsPerMeter);
+            var fromCenter = Project(connector.From.World);
+            var fromPoint = ComputeAttachmentScreenPoint(connector.FromAnchor, fromCenter, fromSize);
+
+            var toSize = connector.To.ComputeScreenSize(_pixelsPerMeter);
+            var toCenter = Project(connector.To.World);
+            var toPoint = ComputeAttachmentScreenPoint(connector.ToAnchor, toCenter, toSize);
+
+            if (connector.Routing != ConnectorRouting.Orthogonal)
+                return new[] { fromPoint, toPoint };
+
+            // The elbow's first segment follows the direction the FromAnchor naturally points: Top/Bottom
+            // anchors leave the shape vertically first, everything else (Left/Right/Center/corners)
+            // leaves horizontally first - this matters because e.g. Top/Bottom share their X with Center,
+            // so a horizontal-first elbow from one of those would visually look like it starts at the center.
+            bool leaveVertically = connector.FromAnchor is LabelAnchor.Top or LabelAnchor.Bottom;
+
+            var elbow = leaveVertically
+                ? new PointF(fromPoint.X, toPoint.Y)
+                : new PointF(toPoint.X, fromPoint.Y);
+
+            return new[] { fromPoint, elbow, toPoint };
+        }
+
+        /// <summary>Finds the connector whose line was hit within a pixel tolerance (checks every segment of its route).
+        /// On overlap between several connectors, the most recently added one wins (the one drawn on top).</summary>
+        private ShapeConnector? HitTestConnector(PointF screenPos, float tolerancePixels = PolylineHitTolerance)
+            => FindNearestConnector(screenPos, c => c.Selectable, tolerancePixels);
+
+        private ShapeConnector? HitTestConnectorForHover(PointF screenPos)
+            => FindNearestConnector(screenPos, c => c.HoverEnabled, PolylineHitTolerance);
+
+        private ShapeConnector? FindNearestConnector(PointF screenPos, Func<ShapeConnector, bool> filter, float tolerancePixels)
+        {
+            for (int i = Connectors.Count - 1; i >= 0; i--)
+            {
+                var c = Connectors[i];
+                if (!filter(c)) continue;
+
+                var route = ComputeConnectorRoute(c);
+                for (int j = 0; j < route.Length - 1; j++)
+                {
+                    if (DistancePointToSegment(screenPos, route[j], route[j + 1]) <= tolerancePixels)
+                        return c;
+                }
+            }
+            return null;
+        }
+
+
         /// <summary>Finds the polyline whose line (not a vertex) was hit within a pixel tolerance.
         /// On overlap between several lines, the most recently added one wins (the one drawn on top).</summary>
         private Polyline? HitTestPolyline(PointF screenPos, float tolerancePixels = PolylineHitTolerance)
@@ -304,6 +383,7 @@ namespace SimpleDrawingEngine
             foreach (var pg in Polygons) pg.SetSelected(false);
             foreach (var im in Images) im.SetSelected(false);
             foreach (var sh in Shapes) sh.SetSelected(false);
+            foreach (var c in Connectors) c.SetSelected(false);
 
             switch (shape)
             {
@@ -312,6 +392,7 @@ namespace SimpleDrawingEngine
                 case Polygon pg: pg.SetSelected(true); break;
                 case ImageMarker im: im.SetSelected(true); break;
                 case ShapeMarker sh: sh.SetSelected(true); break;
+                case ShapeConnector c: c.SetSelected(true); break;
             }
 
             _selectedShape = shape;
@@ -333,6 +414,9 @@ namespace SimpleDrawingEngine
 
         /// <summary>Convenience overload of Select() for a shape marker.</summary>
         public void SelectShapeMarker(ShapeMarker? shape) => Select(shape);
+
+        /// <summary>Convenience overload of Select() for a connector.</summary>
+        public void SelectConnector(ShapeConnector? connector) => Select(connector);
 
         /// <summary>
         /// Starts interactive drawing of a new polyline - every left click on the canvas (away from an
@@ -484,8 +568,15 @@ namespace SimpleDrawingEngine
             CancelDrawing();
             _placingPointOptions = new PointPlacementOptions
             {
-                Label = label, Brush = brush, Pen = pen, Size = size, Shape = shape,
-                Selectable = selectable, Draggable = draggable, HoverEnabled = hoverEnabled, Continuous = continuous
+                Label = label,
+                Brush = brush,
+                Pen = pen,
+                Size = size,
+                Shape = shape,
+                Selectable = selectable,
+                Draggable = draggable,
+                HoverEnabled = hoverEnabled,
+                Continuous = continuous
             };
             _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);
@@ -499,8 +590,15 @@ namespace SimpleDrawingEngine
             CancelDrawing();
             _placingImageOptions = new ImagePlacementOptions
             {
-                Image = image, Label = label, Width = width, Height = height, ScaleWithZoom = scaleWithZoom,
-                Selectable = selectable, Draggable = draggable, HoverEnabled = hoverEnabled, Continuous = continuous
+                Image = image,
+                Label = label,
+                Width = width,
+                Height = height,
+                ScaleWithZoom = scaleWithZoom,
+                Selectable = selectable,
+                Draggable = draggable,
+                HoverEnabled = hoverEnabled,
+                Continuous = continuous
             };
             _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);

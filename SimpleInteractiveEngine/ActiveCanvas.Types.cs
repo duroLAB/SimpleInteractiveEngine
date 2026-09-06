@@ -412,6 +412,70 @@ namespace SimpleDrawingEngine
             internal void SetSelected(bool selected) => Selected = selected;
             internal void MoveTo(Vector3 world) => World = world;
         }
+
+        /// <summary>Routing strategy for ShapeConnector.</summary>
+        public enum ConnectorRouting
+        {
+            /// <summary>A single direct line from the start attachment point to the end attachment point.</summary>
+            Straight,
+
+            /// <summary>An "elbow" connector - first a horizontal segment (change in X), then a vertical
+            /// segment (change in Y) to reach the target. Common in flowchart/diagram-style connectors.</summary>
+            Orthogonal
+        }
+
+        /// <summary>
+        /// A line connecting two ShapeMarkers - has no position of its own, it derives its endpoints from
+        /// the two shapes' current positions (and a chosen attachment point on each) every time it's drawn,
+        /// so it automatically follows drag-and-drop of either shape with no extra bookkeeping needed.
+        /// </summary>
+        public class ShapeConnector
+        {
+            public Guid Id { get; }
+            public ShapeMarker From { get; }
+            public ShapeMarker To { get; }
+            public LabelAnchor FromAnchor { get; private set; } = LabelAnchor.Center;
+            public LabelAnchor ToAnchor { get; private set; } = LabelAnchor.Center;
+            public ConnectorRouting Routing { get; private set; } = ConnectorRouting.Straight;
+            public Pen? Pen { get; private set; }
+            public bool ShowArrow { get; private set; } = true;
+            public float ArrowSize { get; private set; } = 10f;
+            public string Label { get; private set; } = "";
+            public bool ShowLabel { get; private set; } = true;
+
+            /// <summary>Custom world-space label position. If null, a sensible point along the route is used automatically.</summary>
+            public Vector3? LabelPosition { get; private set; }
+
+            public bool Selectable { get; private set; } = true;
+            public bool HoverEnabled { get; private set; } = true;
+            public bool Selected { get; private set; }
+
+            public ShapeConnector(ShapeMarker from, ShapeMarker to, Guid? id = null)
+            {
+                Id = id ?? Guid.NewGuid();
+                From = from ?? throw new ArgumentNullException(nameof(from));
+                To = to ?? throw new ArgumentNullException(nameof(to));
+            }
+
+            /// <summary>Which point on each shape the line attaches to (e.g. Right on the "from" shape, Left on the "to" shape).</summary>
+            public ShapeConnector WithAnchors(LabelAnchor fromAnchor, LabelAnchor toAnchor) { FromAnchor = fromAnchor; ToAnchor = toAnchor; return this; }
+
+            public ShapeConnector WithRouting(ConnectorRouting routing) { Routing = routing; return this; }
+            public ShapeConnector WithPen(Pen pen) { Pen = pen; return this; }
+
+            /// <summary>Shows (or hides) an arrowhead at the "To" end, pointing in the direction of travel.</summary>
+            public ShapeConnector WithArrow(bool show, float size = 10f) { ShowArrow = show; ArrowSize = size; return this; }
+
+            public ShapeConnector WithLabel(string label) { Label = label; return this; }
+            public ShapeConnector WithShowLabel(bool visible) { ShowLabel = visible; return this; }
+            public ShapeConnector WithLabelPosition(float x, float y, float z = 0f) { LabelPosition = new Vector3(x, y, z); return this; }
+
+            /// <summary>If false, the connector's line can't be clicked/selected.</summary>
+            public ShapeConnector WithSelectable(bool selectable) { Selectable = selectable; return this; }
+            public ShapeConnector WithHover(bool enabled) { HoverEnabled = enabled; return this; }
+
+            internal void SetSelected(bool selected) => Selected = selected;
+        }
         #endregion
     }
 }

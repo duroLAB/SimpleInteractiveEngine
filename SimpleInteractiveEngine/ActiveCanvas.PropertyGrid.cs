@@ -46,6 +46,7 @@ namespace SimpleDrawingEngine
                 Polygon pg => new PolygonProperties(pg, this),
                 ImageMarker im => new ImageMarkerProperties(im, this),
                 ShapeMarker sh => new ShapeMarkerProperties(sh, this),
+                ShapeConnector conn => new ShapeConnectorProperties(conn, this),
                 _ => null
             };
 
@@ -440,6 +441,68 @@ namespace SimpleDrawingEngine
             _shape.MoveTo(_engine.ToLocal(new Vector3(x, y, z)));
             _engine.Render();
         }
+    }
+
+    /// <summary>PropertyGrid view-model for ShapeConnector - see ActiveCanvas.CreatePropertyGrid().</summary>
+    public class ShapeConnectorProperties
+    {
+        private readonly ActiveCanvas.ShapeConnector _connector;
+        private readonly ActiveCanvas _engine;
+
+        internal ShapeConnectorProperties(ActiveCanvas.ShapeConnector connector, ActiveCanvas engine)
+        {
+            _connector = connector;
+            _engine = engine;
+        }
+
+        [Category("Appearance")]
+        public string Label { get => _connector.Label; set { _connector.WithLabel(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public bool ShowLabel { get => _connector.ShowLabel; set { _connector.WithShowLabel(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public ActiveCanvas.ConnectorRouting Routing { get => _connector.Routing; set { _connector.WithRouting(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Which point on the \"From\" shape the line starts at.")]
+        public ActiveCanvas.LabelAnchor FromAnchor { get => _connector.FromAnchor; set { _connector.WithAnchors(value, _connector.ToAnchor); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Which point on the \"To\" shape the line ends at.")]
+        public ActiveCanvas.LabelAnchor ToAnchor { get => _connector.ToAnchor; set { _connector.WithAnchors(_connector.FromAnchor, value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public bool ShowArrow { get => _connector.ShowArrow; set { _connector.WithArrow(value, _connector.ArrowSize); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public float ArrowSize { get => _connector.ArrowSize; set { _connector.WithArrow(_connector.ShowArrow, value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public Color LineColor
+        {
+            get => _connector.Pen?.Color ?? _engine.DefaultLineColor;
+            set { _connector.WithPen(new Pen(value, LineWidth)); _engine.Render(); }
+        }
+
+        [Category("Appearance")]
+        public float LineWidth
+        {
+            get => _connector.Pen?.Width ?? 2f;
+            set { _connector.WithPen(new Pen(LineColor, value)); _engine.Render(); }
+        }
+
+        [Category("Behavior")]
+        public bool Selectable { get => _connector.Selectable; set { _connector.WithSelectable(value); _engine.Render(); } }
+
+        [Category("Identity"), ReadOnly(true)]
+        public Guid Id => _connector.Id;
+
+        [Category("Identity"), ReadOnly(true)]
+        public Guid FromId => _connector.From.Id;
+
+        [Category("Identity"), ReadOnly(true)]
+        public Guid ToId => _connector.To.Id;
     }
 
     #endregion

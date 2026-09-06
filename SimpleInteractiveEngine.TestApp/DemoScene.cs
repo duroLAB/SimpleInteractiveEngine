@@ -128,6 +128,21 @@ namespace SimpleDrawingEngine
             box.WithInnerText("Kapacita: 500 ks\nPosledná inventúra: 03/2025")
                .WithInnerTextColor(Color.DarkBlue).WithAutoScaleInnerText(true, minSize: 6f, maxSize: 20f); ;
 
+
+
+
+            var start = engine.AddShape(0, 0, 0, ActiveCanvas.MarkerShapeType.Rectangle, label: "Vstup", width: 2f, brush: new SolidBrush(Color.FromArgb(80, Color.Orange)));
+            var end = engine.AddShape(6, 3, 0, ActiveCanvas.MarkerShapeType.Rectangle, label: "Výstup", width: 2f, brush: new SolidBrush(Color.FromArgb(80, Color.Orange)));
+
+            // priama čiara so šípkou
+            var direct = engine.AddConnector(start, end, label: "priamo")
+                .WithAnchors(ActiveCanvas.LabelAnchor.Right, ActiveCanvas.LabelAnchor.Left);
+
+            // lomená (najprv X, potom Y), hrubšia čiara, bez šípky
+            var elbow = engine.AddConnector(start, end, showArrow: true, routing: ActiveCanvas.ConnectorRouting.Orthogonal).WithAnchors(ActiveCanvas.LabelAnchor.Right, ActiveCanvas.LabelAnchor.Left)
+                .WithPen(new Pen(Color.SteelBlue, 3f)).WithLabel("spojnica");
+
+
             engine.ZoomToFullExtent();           // 10% okraj (default)
         }
 

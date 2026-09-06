@@ -250,6 +250,35 @@ namespace SimpleDrawingEngine
             return shape;
         }
 
+        /// <summary>
+        /// Connects two shape markers with a line - has no position of its own, it derives its endpoints
+        /// from the two shapes' current positions every time it's drawn, so it automatically follows
+        /// drag-and-drop of either shape with no extra bookkeeping needed.
+        ///
+        ///     var a = engine.AddShape(0, 0, 0, ActiveCanvas.MarkerShapeType.Rectangle, label: "Start");
+        ///     var b = engine.AddShape(5, 3, 0, ActiveCanvas.MarkerShapeType.Rectangle, label: "End");
+        ///     engine.AddConnector(a, b, label: "flows to")
+        ///         .WithAnchors(ActiveCanvas.LabelAnchor.Right, ActiveCanvas.LabelAnchor.Left)
+        ///         .WithRouting(ActiveCanvas.ConnectorRouting.Orthogonal);
+        /// </summary>
+        public ShapeConnector AddConnector(ShapeMarker from, ShapeMarker to, string label = "",
+            Pen? pen = null, ConnectorRouting routing = ConnectorRouting.Straight, bool showArrow = true,
+            bool selectable = true, bool hoverEnabled = true, Guid? id = null)
+        {
+            var connector = new ShapeConnector(from, to, id)
+                .WithLabel(label)
+                .WithRouting(routing)
+                .WithArrow(showArrow)
+                .WithSelectable(selectable)
+                .WithHover(hoverEnabled);
+
+            if (pen != null) connector.WithPen(pen);
+
+            Connectors.Add(connector);
+            Render();
+            return connector;
+        }
+
         public void Clear()
         {
             Points.Clear();
@@ -258,6 +287,7 @@ namespace SimpleDrawingEngine
             foreach (var im in Images) im.Image.Dispose();
             Images.Clear();
             Shapes.Clear();
+            Connectors.Clear();
             _selectedShape = null;
             _drawingPolyline = null;
             _drawingPolygon = null;
@@ -267,7 +297,7 @@ namespace SimpleDrawingEngine
         }
 
         /// <summary>
-        /// Finds any item by its Id (Point3D, Polyline, Polygon, ImageMarker, or ShapeMarker).
+        /// Finds any item by its Id (Point3D, Polyline, Polygon, ImageMarker, ShapeMarker, or ShapeConnector).
         /// Handy when you have a Guid from the host application (e.g. from a database) and need to find
         /// the matching item on the canvas, or vice versa - every item's Id can be read directly from its .Id property.
         /// </summary>
@@ -277,7 +307,8 @@ namespace SimpleDrawingEngine
                 ?? (object?)Polylines.FirstOrDefault(pl => pl.Id == id)
                 ?? (object?)Polygons.FirstOrDefault(pg => pg.Id == id)
                 ?? (object?)Images.FirstOrDefault(im => im.Id == id)
-                ?? (object?)Shapes.FirstOrDefault(sh => sh.Id == id);
+                ?? (object?)Shapes.FirstOrDefault(sh => sh.Id == id)
+                ?? (object?)Connectors.FirstOrDefault(c => c.Id == id);
         }
 
         /// <summary>

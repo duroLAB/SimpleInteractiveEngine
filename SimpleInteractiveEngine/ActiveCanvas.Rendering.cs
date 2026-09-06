@@ -87,6 +87,7 @@ namespace SimpleDrawingEngine
                 DrawAxes(g);
                 DrawPolygonFills(g);
                 DrawPolylineSegments(g);
+                DrawShapeConnectors(g);
                 DrawShapeMarkers(g);
                 DrawShapeMarkerInnerText(g);
                 DrawPoints(g);
@@ -95,6 +96,7 @@ namespace SimpleDrawingEngine
                 DrawPolygonLabels(g);
                 DrawImageLabels(g);
                 DrawShapeMarkerLabels(g);
+                DrawShapeConnectorLabels(g);
                 DrawDrawingPreview(g);
                 DrawMeasurement(g);
                 DrawScaleBar(g, _buffer.Width, _buffer.Height);
@@ -187,7 +189,7 @@ namespace SimpleDrawingEngine
         {
             using var defaultPen = new Pen(DefaultLineColor, 2f);
             using var selectionPen = new Pen(Color.FromArgb(SelectionHighlightAlpha, SelectedPointColor), 6f)
-            { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                { StartCap = LineCap.Round, EndCap = LineCap.Round };
 
             foreach (var poly in Polylines)
             {
@@ -507,6 +509,69 @@ namespace SimpleDrawingEngine
                 var offset = sh.LabelOffset ?? ComputeLabelAnchorOffset(sh.LabelAnchor, size);
                 DrawLabelWithBackdrop(g, sh.Label, new PointF(screen.X + offset.X, screen.Y + offset.Y));
             }
+        }
+
+        private void DrawShapeConnectors(Graphics g)
+        {
+            using var defaultPen = new Pen(DefaultLineColor, 2f);
+            using var selectionPen = new Pen(Color.FromArgb(SelectionHighlightAlpha, SelectedPointColor), 6f)
+                { StartCap = LineCap.Round, EndCap = LineCap.Round };
+
+            foreach (var connector in Connectors)
+            {
+                var route = ComputeConnectorRoute(connector);
+                var pen = connector.Pen ?? defaultPen;
+
+                if (connector.Selected)
+                    g.DrawLines(selectionPen, route);
+
+                g.DrawLines(pen, route);
+
+                if (connector.ShowArrow)
+                    DrawArrowhead(g, route[^2], route[^1], pen.Color, connector.ArrowSize);
+            }
+        }
+
+        private void DrawShapeConnectorLabels(Graphics g)
+        {
+            foreach (var connector in Connectors)
+            {
+                if (!connector.ShowLabel || string.IsNullOrEmpty(connector.Label)) continue;
+
+                PointF labelScreen;
+                if (connector.LabelPosition.HasValue)
+                {
+                    labelScreen = Project(connector.LabelPosition.Value);
+                }
+                else
+                {
+                    // No custom position - use the elbow corner for an Orthogonal route (a natural spot for
+                    // a label in flowchart-style diagrams), or the segment midpoint for a Straight one.
+                    var route = ComputeConnectorRoute(connector);
+                    labelScreen = route.Length == 3
+                        ? route[1]
+                        : new PointF((route[0].X + route[^1].X) / 2f, (route[0].Y + route[^1].Y) / 2f);
+                }
+
+                DrawLabelWithBackdrop(g, connector.Label, labelScreen);
+            }
+        }
+
+        /// <summary>Draws a simple filled triangular arrowhead at "to", pointing in the direction of travel from "from".</summary>
+        private static void DrawArrowhead(Graphics g, PointF from, PointF to, Color color, float size)
+        {
+            float angle = (float)Math.Atan2(to.Y - from.Y, to.X - from.X);
+            const float spreadRad = 25f * (float)Math.PI / 180f;
+
+            var p1 = new PointF(
+                to.X - size * (float)Math.Cos(angle - spreadRad),
+                to.Y - size * (float)Math.Sin(angle - spreadRad));
+            var p2 = new PointF(
+                to.X - size * (float)Math.Cos(angle + spreadRad),
+                to.Y - size * (float)Math.Sin(angle + spreadRad));
+
+            using var arrowBrush = new SolidBrush(color);
+            g.FillPolygon(arrowBrush, new[] { to, p1, p2 });
         }
 
         /// <summary>Turns a preset LabelAnchor into a pixel offset from the shape's center, based on its

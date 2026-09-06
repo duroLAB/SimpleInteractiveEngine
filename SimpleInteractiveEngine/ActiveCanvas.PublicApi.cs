@@ -42,6 +42,29 @@ namespace SimpleDrawingEngine
         /// <summary>Converts this engine's local-space coordinates back to raw (real-world CRS) coordinates (local + origin).</summary>
         public Vector3 ToRaw(Vector3 local) => local + _localOrigin;
 
+        /// <summary>
+        /// Creates a standalone Point3D from RAW coordinates, with the local origin offset applied - but
+        /// does NOT add it to Points. Use this (instead of "new Point3D(...)" directly) whenever you build
+        /// your own vertices for AddPolyline/AddPolygon(IEnumerable&lt;Point3D&gt;), so they end up in the
+        /// same local coordinate space as everything added via AddPoint/AddImage.
+        ///
+        /// This matters specifically because AddPolyline/AddPolygon's Point3D-based overload takes vertices
+        /// that are ALREADY positioned - it has no raw x/y/z of its own to offset, so it cannot apply
+        /// SetLocalOrigin() for you. Constructing vertices with "new Point3D(rawX, rawY, rawZ)" directly
+        /// would leave them in raw (un-offset) coordinates, while points added via AddPoint end up in
+        /// local (offset) coordinates - two different coordinate spaces on the same canvas, which looks
+        /// exactly like "points ended up in the wrong place" once a local origin is in use.
+        ///
+        ///     var v1 = engine.CreatePoint(-569500f, -1283200f, 0f, "Start");
+        ///     var v2 = engine.CreatePoint(-569400f, -1283100f, 0f, "End");
+        ///     engine.AddPolyline(new[] { v1, v2 }, "Route");
+        /// </summary>
+        public Point3D CreatePoint(float x, float y, float z = 0f, string label = "", Guid? id = null)
+        {
+            var local = ToLocal(new Vector3(x, y, z));
+            return new Point3D(local.X, local.Y, local.Z, label, id);
+        }
+
         #endregion
 
         #region Public API - points, edges, polylines, polygons
@@ -55,8 +78,7 @@ namespace SimpleDrawingEngine
             Brush? brush = null, Pen? pen = null, float? size = null, PointShape shape = PointShape.Circle,
             bool selectable = true, bool draggable = true, bool hoverEnabled = true, Guid? id = null)
         {
-            var local = ToLocal(new Vector3(x, y, z));
-            var p = new Point3D(local.X, local.Y, local.Z, label, id)
+            var p = CreatePoint(x, y, z, label, id)
                 .WithShape(shape)
                 .WithSelectable(selectable)
                 .WithDraggable(draggable)
@@ -79,9 +101,12 @@ namespace SimpleDrawingEngine
             => AddPolyline(new[] { a, b }, label, linePen, id);
 
         /// <summary>
-        /// Adds a polyline from existing points (e.g. created via AddPoint with a custom look). Points
-        /// are automatically added to Points as well if they aren't there already - so they get
-        /// hit-testing/drag/hover exactly as if you'd added them directly.
+        /// Adds a polyline from existing points (e.g. created via AddPoint/CreatePoint with a custom look).
+        /// These vertices are assumed to already be in the engine's LOCAL coordinate space - if you build
+        /// them yourself, use CreatePoint(rawX, rawY, rawZ) rather than "new Point3D(rawX, rawY, rawZ)"
+        /// directly, or SetLocalOrigin()'s offset will silently not apply to them (see CreatePoint's XML
+        /// comment for why). Points are automatically added to Points as well if they aren't there
+        /// already - so they get hit-testing/drag/hover exactly as if you'd added them directly.
         /// </summary>
         public Polyline AddPolyline(IEnumerable<Point3D> vertices, string label = "", Pen? linePen = null, Guid? id = null)
         {
@@ -100,20 +125,19 @@ namespace SimpleDrawingEngine
             return poly;
         }
 
-        /// <summary>Convenience overload - creates vertices directly from coordinates (default point look).</summary>
         /// <summary>Convenience overload - creates vertices directly from raw coordinates (default point look).
         /// Same offset handling as AddPoint - see SetLocalOrigin().</summary>
         public Polyline AddPolyline(IEnumerable<(float x, float y, float z)> worldPoints, string label = "", Pen? linePen = null)
         {
-            var vertices = worldPoints.Select(c => ToLocal(new Vector3(c.x, c.y, c.z)))
-                .Select(v => new Point3D(v.X, v.Y, v.Z)).ToList();
+            var vertices = worldPoints.Select(c => CreatePoint(c.x, c.y, c.z)).ToList();
             return AddPolyline(vertices, label, linePen);
         }
 
         /// <summary>
-        /// Adds a closed polygon from existing points (at least 3 vertices). Just like with AddPolyline,
-        /// vertices are automatically added to Points too - hit-test/drag/hover for free.
-        /// Has a semi-transparent fill by default (DefaultPolygonFillColor).
+        /// Adds a closed polygon from existing points (at least 3 vertices). Same note as AddPolyline
+        /// about local vs. raw coordinates applies here - use CreatePoint() to build your own vertices.
+        /// Just like with AddPolyline, vertices are automatically added to Points too - hit-test/drag/hover
+        /// for free. Has a semi-transparent fill by default (DefaultPolygonFillColor).
         /// </summary>
         public Polygon AddPolygon(IEnumerable<Point3D> vertices, string label = "", Brush? fillBrush = null, Pen? outlinePen = null, Guid? id = null)
         {
@@ -137,8 +161,7 @@ namespace SimpleDrawingEngine
         /// Same offset handling as AddPoint - see SetLocalOrigin().</summary>
         public Polygon AddPolygon(IEnumerable<(float x, float y, float z)> worldPoints, string label = "", Brush? fillBrush = null, Pen? outlinePen = null)
         {
-            var vertices = worldPoints.Select(c => ToLocal(new Vector3(c.x, c.y, c.z)))
-                .Select(v => new Point3D(v.X, v.Y, v.Z)).ToList();
+            var vertices = worldPoints.Select(c => CreatePoint(c.x, c.y, c.z)).ToList();
             return AddPolygon(vertices, label, fillBrush, outlinePen);
         }
 
@@ -165,6 +188,33 @@ namespace SimpleDrawingEngine
             return marker;
         }
 
+        /// <summary>
+        /// Adds a simple vector shape (circle/ellipse/rectangle/rounded rectangle) at a point in the world -
+        /// no vertices, drag-and-drop moves the whole thing at once. By default it has a fixed size in
+        /// pixels (independent of zoom) - call WithScaleWithZoom(true) on the returned instance for a
+        /// real-world size instead. x/y/z are RAW coordinates - if SetLocalOrigin() was called, the offset
+        /// is applied automatically.
+        /// </summary>
+        public ShapeMarker AddShape(float x, float y, float z = 0f, MarkerShapeType shapeType = MarkerShapeType.Circle,
+            string label = "", Brush? brush = null, Pen? pen = null, float width = 40f, float? height = null,
+            bool selectable = true, bool draggable = true, bool hoverEnabled = true, Guid? id = null)
+        {
+            var local = ToLocal(new Vector3(x, y, z));
+            var shape = new ShapeMarker(local.X, local.Y, local.Z, shapeType, id)
+                .WithSize(width, height)
+                .WithLabel(label)
+                .WithSelectable(selectable)
+                .WithDraggable(draggable)
+                .WithHover(hoverEnabled);
+
+            if (brush != null) shape.WithBrush(brush);
+            if (pen != null) shape.WithPen(pen);
+
+            Shapes.Add(shape);
+            Render();
+            return shape;
+        }
+
         public void Clear()
         {
             Points.Clear();
@@ -172,6 +222,7 @@ namespace SimpleDrawingEngine
             Polygons.Clear();
             foreach (var im in Images) im.Image.Dispose();
             Images.Clear();
+            Shapes.Clear();
             _selectedShape = null;
             _drawingPolyline = null;
             _drawingPolygon = null;
@@ -181,7 +232,7 @@ namespace SimpleDrawingEngine
         }
 
         /// <summary>
-        /// Finds any item by its Id (Point3D, Polyline, Polygon, or ImageMarker).
+        /// Finds any item by its Id (Point3D, Polyline, Polygon, ImageMarker, or ShapeMarker).
         /// Handy when you have a Guid from the host application (e.g. from a database) and need to find
         /// the matching item on the canvas, or vice versa - every item's Id can be read directly from its .Id property.
         /// </summary>
@@ -189,8 +240,9 @@ namespace SimpleDrawingEngine
         {
             return (object?)Points.FirstOrDefault(p => p.Id == id)
                 ?? (object?)Polylines.FirstOrDefault(pl => pl.Id == id)
-                ?? Polygons.FirstOrDefault(pg => pg.Id == id)
-                ?? (object?)Images.FirstOrDefault(im => im.Id == id);
+                ?? (object?)Polygons.FirstOrDefault(pg => pg.Id == id)
+                ?? (object?)Images.FirstOrDefault(im => im.Id == id)
+                ?? (object?)Shapes.FirstOrDefault(sh => sh.Id == id);
         }
 
         /// <summary>

@@ -18,7 +18,7 @@ namespace SimpleInteractiveEngine.TestApp
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            //DemoScene.Build(engine);
+            DemoScene.Build(engine);
 
 
             /*   // odteraz zadávaš VŠETKO v surových S-JTSK súradniciach - engine si sám odpočíta offset

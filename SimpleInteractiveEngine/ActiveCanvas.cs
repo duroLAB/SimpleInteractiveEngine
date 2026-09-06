@@ -46,6 +46,7 @@ namespace SimpleDrawingEngine
         public List<Polyline> Polylines { get; } = new List<Polyline>();
         public List<Polygon> Polygons { get; } = new List<Polygon>();
         public List<ImageMarker> Images { get; } = new List<ImageMarker>();
+        public List<ShapeMarker> Shapes { get; } = new List<ShapeMarker>();
         public float PointScreenRadius { get; set; } = 6f;
 
         /// <summary>Default point color, used when the point has no custom Brush (see Point3D.WithBrush).</summary>
@@ -112,6 +113,10 @@ namespace SimpleDrawingEngine
         private float _draggingImageDepth;
         private ImageMarker? _hoverImage;
 
+        private ShapeMarker? _draggingShape;
+        private float _draggingShapeDepth;
+        private ShapeMarker? _hoverShape;
+
         /// <summary>Whatever is currently selected - Point3D, Polyline, Polygon, ImageMarker, or null. Always at most one thing at a time.</summary>
         private object? _selectedShape;
 
@@ -134,6 +139,9 @@ namespace SimpleDrawingEngine
 
         /// <summary>The currently selected icon/image, if that's what's selected (otherwise null).</summary>
         public ImageMarker? SelectedImage => _selectedShape as ImageMarker;
+
+        /// <summary>The currently selected shape marker (circle/ellipse/rectangle/rounded rectangle), if that's what's selected (otherwise null).</summary>
+        public ShapeMarker? SelectedShapeMarker => _selectedShape as ShapeMarker;
 
         // ---- Interactive drawing of a new polyline/polygon by clicking on the canvas ----
         private Polyline? _drawingPolyline;
@@ -213,6 +221,9 @@ namespace SimpleDrawingEngine
         /// <summary>Click on an icon/image.</summary>
         public event EventHandler<ImageMarker>? ImageClicked;
 
+        /// <summary>Click on a shape marker (circle/ellipse/rectangle/rounded rectangle).</summary>
+        public event EventHandler<ShapeMarker>? ShapeClicked;
+
         /// <summary>Double-click on a point - fires in addition to PointClicked (which fires on both clicks
         /// of the double-click). Typical use: open a properties dialog (see CreatePropertyGrid()).</summary>
         public event EventHandler<Point3D>? PointDoubleClicked;
@@ -225,6 +236,9 @@ namespace SimpleDrawingEngine
 
         /// <summary>Double-click on an icon/image. See PointDoubleClicked.</summary>
         public event EventHandler<ImageMarker>? ImageDoubleClicked;
+
+        /// <summary>Double-click on a shape marker. See PointDoubleClicked.</summary>
+        public event EventHandler<ShapeMarker>? ShapeDoubleClicked;
 
         /// <summary>
         /// Fires during Render(), right after the background image layer - lets the host draw an arbitrary

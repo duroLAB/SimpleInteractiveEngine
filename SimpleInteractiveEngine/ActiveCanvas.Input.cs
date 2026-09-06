@@ -91,6 +91,22 @@ namespace SimpleDrawingEngine
                     return;
                 }
 
+                var hitShape = HitTestShape(e.Location);
+                if (hitShape != null)
+                {
+                    Select(hitShape);
+                    ShapeClicked?.Invoke(this, hitShape);
+                    if (e.Clicks >= 2) ShapeDoubleClicked?.Invoke(this, hitShape);
+
+                    if (e.Clicks < 2 && AllowDragPoints && hitShape.Draggable)
+                    {
+                        _draggingShape = hitShape;
+                        Project(hitShape.World, out _draggingShapeDepth);
+                        _pictureBox.Cursor = Cursors.Hand;
+                    }
+                    return;
+                }
+
                 var hitLine = HitTestPolyline(e.Location);
                 if (hitLine != null)
                 {
@@ -139,6 +155,11 @@ namespace SimpleDrawingEngine
                 _draggingImage = null;
                 _pictureBox.Cursor = Cursors.Default;
             }
+            if (_draggingShape != null && (Control.MouseButtons & MouseButtons.Left) == 0)
+            {
+                _draggingShape = null;
+                _pictureBox.Cursor = Cursors.Default;
+            }
             if (_isPanning && (Control.MouseButtons & (MouseButtons.Right | MouseButtons.Middle)) == 0)
             {
                 _isPanning = false;
@@ -172,6 +193,13 @@ namespace SimpleDrawingEngine
             if (_draggingImage != null)
             {
                 _draggingImage.MoveTo(ScreenToWorld(e.Location, _draggingImageDepth));
+                Render();
+                return;
+            }
+
+            if (_draggingShape != null)
+            {
+                _draggingShape.MoveTo(ScreenToWorld(e.Location, _draggingShapeDepth));
                 Render();
                 return;
             }
@@ -214,6 +242,7 @@ namespace SimpleDrawingEngine
             bool changed = false;
             if (_hoverPoint != null) { _hoverPoint = null; changed = true; }
             if (_hoverImage != null) { _hoverImage = null; changed = true; }
+            if (_hoverShape != null) { _hoverShape = null; changed = true; }
             if (_drawingPreviewScreenPos != null) { _drawingPreviewScreenPos = null; changed = true; }
             if (_measurePreviewScreenPos != null) { _measurePreviewScreenPos = null; changed = true; }
 
@@ -229,16 +258,18 @@ namespace SimpleDrawingEngine
         {
             var hitPoint = HitTestForHover(location);
             var hitImage = hitPoint == null ? HitTestImageForHover(location) : null; // a point takes priority
+            var hitShape = (hitPoint == null && hitImage == null) ? HitTestShapeForHover(location) : null;
 
-            if (hitPoint == _hoverPoint && hitImage == _hoverImage) return;
+            if (hitPoint == _hoverPoint && hitImage == _hoverImage && hitShape == _hoverShape) return;
 
             _hoverPoint = hitPoint;
             _hoverImage = hitImage;
+            _hoverShape = hitShape;
 
             // While drawing/placing/measuring, DrawingCursor stays put regardless of what's hovered underneath.
             if (!IsDrawing && !_measuringActive)
             {
-                bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false);
+                bool selectable = (hitPoint?.Selectable ?? false) || (hitImage?.Selectable ?? false) || (hitShape?.Selectable ?? false);
                 _pictureBox.Cursor = selectable ? Cursors.Hand : Cursors.Default;
             }
             Render();
@@ -266,6 +297,12 @@ namespace SimpleDrawingEngine
                 if (_draggingImage != null)
                 {
                     _draggingImage = null;
+                    _pictureBox.Cursor = Cursors.Default;
+                }
+
+                if (_draggingShape != null)
+                {
+                    _draggingShape = null;
                     _pictureBox.Cursor = Cursors.Default;
                 }
 

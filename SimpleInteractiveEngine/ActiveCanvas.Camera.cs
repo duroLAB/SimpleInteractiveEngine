@@ -118,6 +118,28 @@ namespace SimpleDrawingEngine
             return null;
         }
 
+        /// <summary>Finds the shape marker under the given screen position (a simple test against its bounding rectangle).</summary>
+        private ShapeMarker? HitTestShape(PointF screenPos) => FindNearestShape(screenPos, sh => sh.Selectable);
+
+        private ShapeMarker? HitTestShapeForHover(PointF screenPos) => FindNearestShape(screenPos, sh => sh.HoverEnabled);
+
+        private ShapeMarker? FindNearestShape(PointF screenPos, Func<ShapeMarker, bool> filter)
+        {
+            for (int i = Shapes.Count - 1; i >= 0; i--)
+            {
+                var sh = Shapes[i];
+                if (!filter(sh)) continue;
+
+                var size = sh.ComputeScreenSize(_pixelsPerMeter);
+                var screen = Project(sh.World);
+                var rect = new RectangleF(screen.X - size.Width / 2f, screen.Y - size.Height / 2f, size.Width, size.Height);
+
+                if (rect.Contains(screenPos))
+                    return sh;
+            }
+            return null;
+        }
+
         /// <summary>Finds the polyline whose line (not a vertex) was hit within a pixel tolerance.
         /// On overlap between several lines, the most recently added one wins (the one drawn on top).</summary>
         private Polyline? HitTestPolyline(PointF screenPos, float tolerancePixels = PolylineHitTolerance)
@@ -281,6 +303,7 @@ namespace SimpleDrawingEngine
             foreach (var pl in Polylines) pl.SetSelected(false);
             foreach (var pg in Polygons) pg.SetSelected(false);
             foreach (var im in Images) im.SetSelected(false);
+            foreach (var sh in Shapes) sh.SetSelected(false);
 
             switch (shape)
             {
@@ -288,6 +311,7 @@ namespace SimpleDrawingEngine
                 case Polyline pl: pl.SetSelected(true); break;
                 case Polygon pg: pg.SetSelected(true); break;
                 case ImageMarker im: im.SetSelected(true); break;
+                case ShapeMarker sh: sh.SetSelected(true); break;
             }
 
             _selectedShape = shape;
@@ -306,6 +330,9 @@ namespace SimpleDrawingEngine
 
         /// <summary>Convenience overload of Select() for an image/icon.</summary>
         public void SelectImage(ImageMarker? image) => Select(image);
+
+        /// <summary>Convenience overload of Select() for a shape marker.</summary>
+        public void SelectShapeMarker(ShapeMarker? shape) => Select(shape);
 
         /// <summary>
         /// Starts interactive drawing of a new polyline - every left click on the canvas (away from an
@@ -457,15 +484,8 @@ namespace SimpleDrawingEngine
             CancelDrawing();
             _placingPointOptions = new PointPlacementOptions
             {
-                Label = label,
-                Brush = brush,
-                Pen = pen,
-                Size = size,
-                Shape = shape,
-                Selectable = selectable,
-                Draggable = draggable,
-                HoverEnabled = hoverEnabled,
-                Continuous = continuous
+                Label = label, Brush = brush, Pen = pen, Size = size, Shape = shape,
+                Selectable = selectable, Draggable = draggable, HoverEnabled = hoverEnabled, Continuous = continuous
             };
             _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);
@@ -479,15 +499,8 @@ namespace SimpleDrawingEngine
             CancelDrawing();
             _placingImageOptions = new ImagePlacementOptions
             {
-                Image = image,
-                Label = label,
-                Width = width,
-                Height = height,
-                ScaleWithZoom = scaleWithZoom,
-                Selectable = selectable,
-                Draggable = draggable,
-                HoverEnabled = hoverEnabled,
-                Continuous = continuous
+                Image = image, Label = label, Width = width, Height = height, ScaleWithZoom = scaleWithZoom,
+                Selectable = selectable, Draggable = draggable, HoverEnabled = hoverEnabled, Continuous = continuous
             };
             _pictureBox.Cursor = DrawingCursor;
             DrawingStarted?.Invoke(this, EventArgs.Empty);

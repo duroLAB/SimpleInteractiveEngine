@@ -16,7 +16,7 @@ namespace SimpleDrawingEngine
             ///Image img = Image.FromFile("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif");
             
             //engine.SetBackgroundImageFromGeoTiff("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif", maxPixelDimension: 3000);
-            engine.SetBackgroundImageFromGeoTiff("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif", maxPixelDimension: null);
+           // engine.SetBackgroundImageFromGeoTiff("D:\\TestGisData\\testOrto\\BRATISLAVA_7-2.tif", maxPixelDimension: null);
 
             
             //            engine.SetBackgroundImage(img, 0, 0, 130);
@@ -24,7 +24,7 @@ namespace SimpleDrawingEngine
             // =====================================================================
             //  1. POINT - the simplest case
             // =====================================================================
-            var basicPoint = engine.AddPoint(0, 0, 0, "Basic point");
+        /*    var basicPoint = engine.AddPoint(0, 0, 0, "Basic point");
 
             // A point with a custom look (brush, pen, size) - all via AddPoint's constructor/parameters
             var styledPoint = engine.AddPoint(4, 2, 0, "Custom look",
@@ -98,6 +98,17 @@ namespace SimpleDrawingEngine
             // An icon that can only be selected (e.g. to show info), but not moved
             var fixedIcon = CreatePinIcon(Color.Goldenrod);
             engine.AddImage(fixedIcon, 0, 8, 0, "Substation", width: 24, draggable: false);
+            */
+
+            // Kruh, pevná veľkosť v pixeloch
+            var circle = engine.AddShape(5, 3, 0, ActiveCanvas.MarkerShapeType.Circle,
+                label: "Senzor", brush: new SolidBrush(Color.Crimson), width: 24f);
+
+            // Zaoblený obdĺžnik, škáluje sa so zoomom (skutočná veľkosť vo svete)
+            var zone2 = engine.AddShape(10, 5, 0, ActiveCanvas.MarkerShapeType.RoundedRectangle,
+                label: "Zóna", brush: new SolidBrush(Color.FromArgb(80, Color.Orange)),
+                pen: new Pen(Color.OrangeRed, 2f), width: 4f, height: 3f);
+            zone2.WithScaleWithZoom(true).WithCornerRadius(0.5f);
         }
 
         /// <summary>Generates a simple "pin" icon (circle + point) directly in code, so the example is

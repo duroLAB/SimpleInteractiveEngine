@@ -45,6 +45,7 @@ namespace SimpleDrawingEngine
                 Polyline pl => new PolylineProperties(pl, this),
                 Polygon pg => new PolygonProperties(pg, this),
                 ImageMarker im => new ImageMarkerProperties(im, this),
+                ShapeMarker sh => new ShapeMarkerProperties(sh, this),
                 _ => null
             };
 
@@ -317,6 +318,93 @@ namespace SimpleDrawingEngine
         private void Move(float x, float y, float z)
         {
             _marker.MoveTo(_engine.ToLocal(new Vector3(x, y, z)));
+            _engine.Render();
+        }
+    }
+
+    /// <summary>PropertyGrid view-model for ShapeMarker - see ActiveCanvas.CreatePropertyGrid().</summary>
+    public class ShapeMarkerProperties
+    {
+        private readonly ActiveCanvas.ShapeMarker _shape;
+        private readonly ActiveCanvas _engine;
+
+        internal ShapeMarkerProperties(ActiveCanvas.ShapeMarker shape, ActiveCanvas engine)
+        {
+            _shape = shape;
+            _engine = engine;
+        }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float X { get => _engine.ToRaw(_shape.World).X; set => Move(value, Y, Z); }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float Y { get => _engine.ToRaw(_shape.World).Y; set => Move(X, value, Z); }
+
+        [Category("Position")]
+        [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
+        public float Z { get => _engine.ToRaw(_shape.World).Z; set => Move(X, Y, value); }
+
+        [Category("Appearance")]
+        public string Label { get => _shape.Label; set { _shape.WithLabel(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public bool ShowLabel { get => _shape.ShowLabel; set { _shape.WithShowLabel(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public ActiveCanvas.MarkerShapeType ShapeType { get => _shape.ShapeType; set { _shape.WithShapeType(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Width in pixels (fixed on-screen size), or in meters if ScaleWithZoom is true.")]
+        public float Width { get => _shape.Width; set { _shape.WithSize(value, _shape.Height); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Height; if left equal to Width, the shape is a circle/square instead of an ellipse/rectangle.")]
+        public float Height { get => _shape.Height ?? _shape.Width; set { _shape.WithSize(_shape.Width, value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Only used when ShapeType is RoundedRectangle - same unit as Width (pixels, or meters if ScaleWithZoom).")]
+        public float CornerRadius { get => _shape.CornerRadius; set { _shape.WithCornerRadius(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("If true, the shape grows/shrinks with zoom like a real-world object; if false, it keeps a fixed pixel size.")]
+        public bool ScaleWithZoom { get => _shape.ScaleWithZoom; set { _shape.WithScaleWithZoom(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Fill color. Only editable here if the shape uses a plain solid color (no custom gradient/hatch brush).")]
+        public Color FillColor
+        {
+            get => (_shape.Brush as SolidBrush)?.Color ?? _engine.DefaultPointColor;
+            set { _shape.WithBrush(new SolidBrush(value)); _engine.Render(); }
+        }
+
+        [Category("Appearance")]
+        public Color OutlineColor
+        {
+            get => _shape.Pen?.Color ?? Color.Black;
+            set { _shape.WithPen(new Pen(value, OutlineWidth)); _engine.Render(); }
+        }
+
+        [Category("Appearance")]
+        public float OutlineWidth
+        {
+            get => _shape.Pen?.Width ?? 1.5f;
+            set { _shape.WithPen(new Pen(OutlineColor, value)); _engine.Render(); }
+        }
+
+        [Category("Behavior")]
+        public bool Selectable { get => _shape.Selectable; set { _shape.WithSelectable(value); _engine.Render(); } }
+
+        [Category("Behavior")]
+        public bool Draggable { get => _shape.Draggable; set { _shape.WithDraggable(value); _engine.Render(); } }
+
+        [Category("Identity"), ReadOnly(true)]
+        public Guid Id => _shape.Id;
+
+        private void Move(float x, float y, float z)
+        {
+            _shape.MoveTo(_engine.ToLocal(new Vector3(x, y, z)));
             _engine.Render();
         }
     }

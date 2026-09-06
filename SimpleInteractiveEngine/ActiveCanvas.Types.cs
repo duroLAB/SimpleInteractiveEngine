@@ -247,6 +247,88 @@ namespace SimpleDrawingEngine
             internal void SetSelected(bool selected) => Selected = selected;
             internal void MoveTo(Vector3 world) => World = world;
         }
+
+        /// <summary>Shape drawn by a ShapeMarker.</summary>
+        public enum MarkerShapeType
+        {
+            Circle,
+            Ellipse,
+            Rectangle,
+            RoundedRectangle
+        }
+
+        /// <summary>
+        /// A simple vector shape (circle/ellipse/rectangle/rounded rectangle) anchored at a single point -
+        /// no vertices, no per-corner editing. Behaves like ImageMarker: drag-and-drop moves the whole
+        /// shape at once, and it can either keep a fixed on-screen size regardless of zoom, or scale with
+        /// zoom like a real-world object (WithScaleWithZoom).
+        /// </summary>
+        public class ShapeMarker
+        {
+            public Guid Id { get; }
+            public Vector3 World { get; private set; }
+            public MarkerShapeType ShapeType { get; private set; }
+            public float Width { get; private set; } = 40f;
+            public float? Height { get; private set; }
+            public float CornerRadius { get; private set; } = 8f; // only used for RoundedRectangle
+            public bool ScaleWithZoom { get; private set; }
+            public Brush? Brush { get; private set; }
+            public Pen? Pen { get; private set; }
+            public bool Selectable { get; private set; } = true;
+            public bool Draggable { get; private set; } = true;
+            public bool HoverEnabled { get; private set; } = true;
+            public bool Selected { get; private set; }
+            public string Label { get; private set; } = "";
+            public bool ShowLabel { get; private set; } = true;
+            public PointF? LabelOffset { get; private set; }
+
+            public ShapeMarker(float x, float y, float z = 0f, MarkerShapeType shapeType = MarkerShapeType.Circle, Guid? id = null)
+            {
+                Id = id ?? Guid.NewGuid();
+                World = new Vector3(x, y, z);
+                ShapeType = shapeType;
+            }
+
+            public ShapeMarker WithShapeType(MarkerShapeType shapeType) { ShapeType = shapeType; return this; }
+
+            /// <summary>Size. In pixels (default), or in meters if ScaleWithZoom = true. If height is
+            /// omitted, the shape is as tall as it is wide (a circle instead of an ellipse, a square
+            /// instead of a rectangle).</summary>
+            public ShapeMarker WithSize(float width, float? height = null) { Width = width; Height = height; return this; }
+
+            /// <summary>Corner radius for RoundedRectangle (same unit as Width - pixels, or meters if ScaleWithZoom). Ignored for other shapes.</summary>
+            public ShapeMarker WithCornerRadius(float radius) { CornerRadius = radius; return this; }
+
+            /// <summary>If true, the shape grows/shrinks with zoom (Width/Height/CornerRadius are then in
+            /// meters). If false (default), it always has the same on-screen size regardless of zoom.</summary>
+            public ShapeMarker WithScaleWithZoom(bool scale) { ScaleWithZoom = scale; return this; }
+
+            public ShapeMarker WithBrush(Brush brush) { Brush = brush; return this; }
+            public ShapeMarker WithPen(Pen pen) { Pen = pen; return this; }
+
+            /// <summary>If false, the shape can be clicked/selected, but can't be dragged with the mouse - locks its position.</summary>
+            public ShapeMarker WithDraggable(bool draggable) { Draggable = draggable; return this; }
+
+            public ShapeMarker WithSelectable(bool selectable) { Selectable = selectable; return this; }
+            public ShapeMarker WithHover(bool enabled) { HoverEnabled = enabled; return this; }
+            public ShapeMarker WithLabel(string label) { Label = label; return this; }
+            public ShapeMarker WithShowLabel(bool visible) { ShowLabel = visible; return this; }
+            public ShapeMarker WithLabelOffset(float dxPixels, float dyPixels) { LabelOffset = new PointF(dxPixels, dyPixels); return this; }
+
+            /// <summary>Computes the actual on-screen size (in pixels) at the given current zoom level.</summary>
+            internal SizeF ComputeScreenSize(float pixelsPerMeter)
+            {
+                float scale = ScaleWithZoom ? pixelsPerMeter : 1f;
+                return new SizeF(Width * scale, (Height ?? Width) * scale);
+            }
+
+            /// <summary>Computes the actual on-screen corner radius (RoundedRectangle) at the given current zoom level.</summary>
+            internal float ComputeScreenCornerRadius(float pixelsPerMeter)
+                => CornerRadius * (ScaleWithZoom ? pixelsPerMeter : 1f);
+
+            internal void SetSelected(bool selected) => Selected = selected;
+            internal void MoveTo(Vector3 world) => World = world;
+        }
         #endregion
     }
 }

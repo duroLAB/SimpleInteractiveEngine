@@ -86,11 +86,13 @@ namespace SimpleDrawingEngine
                 DrawAxes(g);
                 DrawPolygonFills(g);
                 DrawPolylineSegments(g);
+                DrawShapeMarkers(g);
                 DrawPoints(g);
                 DrawImages(g);
                 DrawPolylineLabels(g);
                 DrawPolygonLabels(g);
                 DrawImageLabels(g);
+                DrawShapeMarkerLabels(g);
                 DrawDrawingPreview(g);
                 DrawMeasurement(g);
                 DrawScaleBar(g, _buffer.Width, _buffer.Height);
@@ -183,7 +185,7 @@ namespace SimpleDrawingEngine
         {
             using var defaultPen = new Pen(DefaultLineColor, 2f);
             using var selectionPen = new Pen(Color.FromArgb(SelectionHighlightAlpha, SelectedPointColor), 6f)
-            { StartCap = LineCap.Round, EndCap = LineCap.Round };
+                { StartCap = LineCap.Round, EndCap = LineCap.Round };
 
             foreach (var poly in Polylines)
             {
@@ -434,6 +436,99 @@ namespace SimpleDrawingEngine
                 var screen = Project(im.World);
                 var offset = im.LabelOffset ?? new PointF(size.Width / 2f + 2, -size.Height / 2f);
                 DrawLabelWithBackdrop(g, im.Label, new PointF(screen.X + offset.X, screen.Y + offset.Y));
+            }
+        }
+
+        private void DrawShapeMarkers(Graphics g)
+        {
+            // Same "painter's algorithm" as points/images - farther shapes are drawn first.
+            var ordered = Shapes
+                .Select(sh => (Shape: sh, Screen: Project(sh.World, out float depth), Depth: depth))
+                .OrderByDescending(t => t.Depth);
+
+            foreach (var (sh, screen, _) in ordered)
+            {
+                var size = sh.ComputeScreenSize(_pixelsPerMeter);
+                var rect = new RectangleF(screen.X - size.Width / 2f, screen.Y - size.Height / 2f, size.Width, size.Height);
+                float cornerRadius = sh.ComputeScreenCornerRadius(_pixelsPerMeter);
+                bool isHover = sh.HoverEnabled && ReferenceEquals(sh, _hoverShape);
+
+                if (isHover)
+                {
+                    // Same principle as point/image hover glow - a subtle extra semi-transparent outline of the same shape.
+                    var haloRect = RectangleF.Inflate(rect, HoverHaloExtraRadius, HoverHaloExtraRadius);
+                    Color haloColor = (sh.Brush as SolidBrush)?.Color ?? DefaultPointColor;
+                    using var haloPath = BuildMarkerShapePath(sh.ShapeType, haloRect, cornerRadius + HoverHaloExtraRadius);
+                    using var haloBrush = new SolidBrush(Color.FromArgb(HoverHaloAlpha, haloColor));
+                    g.FillPath(haloBrush, haloPath);
+                }
+
+                using var shapePath = BuildMarkerShapePath(sh.ShapeType, rect, cornerRadius);
+
+                if (sh.Brush != null)
+                {
+                    g.FillPath(sh.Brush, shapePath);
+                }
+                else
+                {
+                    using var fillBrush = new SolidBrush(DefaultPointColor);
+                    g.FillPath(fillBrush, shapePath);
+                }
+
+                if (sh.Pen != null)
+                    g.DrawPath(sh.Pen, shapePath);
+
+                if (isHover)
+                {
+                    using var ringPen = new Pen(Color.FromArgb(HoverRingAlpha, Color.White), 1.5f);
+                    g.DrawPath(ringPen, shapePath);
+                }
+
+                if (sh.Selected)
+                {
+                    var selRect = RectangleF.Inflate(rect, SelectionRingExtraRadius, SelectionRingExtraRadius);
+                    using var selPath = BuildMarkerShapePath(sh.ShapeType, selRect, cornerRadius + SelectionRingExtraRadius);
+                    using var selectionPen = new Pen(SelectedPointColor, 2f);
+                    g.DrawPath(selectionPen, selPath);
+                }
+            }
+        }
+
+        private void DrawShapeMarkerLabels(Graphics g)
+        {
+            foreach (var sh in Shapes)
+            {
+                if (!sh.ShowLabel || string.IsNullOrEmpty(sh.Label)) continue;
+
+                var size = sh.ComputeScreenSize(_pixelsPerMeter);
+                var screen = Project(sh.World);
+                var offset = sh.LabelOffset ?? new PointF(size.Width / 2f + 2, -size.Height / 2f);
+                DrawLabelWithBackdrop(g, sh.Label, new PointF(screen.X + offset.X, screen.Y + offset.Y));
+            }
+        }
+
+        /// <summary>Builds the GraphicsPath for a shape marker's outline - used consistently for the fill,
+        /// outline, hover glow, and selection ring, same principle as BuildShapePath for point shapes.</summary>
+        private static GraphicsPath BuildMarkerShapePath(MarkerShapeType type, RectangleF rect, float cornerRadius)
+        {
+            switch (type)
+            {
+                case MarkerShapeType.Rectangle:
+                    var rectPath = new GraphicsPath();
+                    rectPath.AddRectangle(rect);
+                    return rectPath;
+
+                case MarkerShapeType.RoundedRectangle:
+                    // Clamp so the corner radius never exceeds half the shorter side (AddArc would otherwise misbehave).
+                    float maxRadius = Math.Min(rect.Width, rect.Height) / 2f;
+                    return RoundedRect(rect, Math.Max(0f, Math.Min(cornerRadius, maxRadius)));
+
+                case MarkerShapeType.Ellipse:
+                case MarkerShapeType.Circle:
+                default:
+                    var ellipsePath = new GraphicsPath();
+                    ellipsePath.AddEllipse(rect);
+                    return ellipsePath;
             }
         }
 

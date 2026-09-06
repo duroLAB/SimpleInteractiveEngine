@@ -215,4 +215,4 @@ engine.ShapeDoubleClicked += (s, shape) =>
 
 ## License
 
-_(fill in as you like - e.g. MIT)_
+MIT — see [LICENSE](LICENSE) for the full text.

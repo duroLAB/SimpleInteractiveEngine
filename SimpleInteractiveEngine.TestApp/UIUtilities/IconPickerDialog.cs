@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -27,7 +28,20 @@ namespace IconPicker
     ///             pictureBoxNahlad.Image = Image.FromFile(vybranaCesta);
     ///         }
     ///     }
+    ///
+    /// POZNÁMKA k [Browsable(false)]/[DesignerSerializationVisibility(Hidden)] nižšie: tento dialóg sa
+    /// vytvára výhradne v kóde (new IconPickerDialog(...)) a nikdy by nemal skončiť ako komponenta
+    /// položená na plátne iného Formu vo VS Designeri. Keďže ale dedí z Form, Designer by sa - ak by sa
+    /// tam predsa len ocitol (napr. omylom pretiahnutý, alebo pri reloade projektu) - pokúsil
+    /// automaticky vygenerovať serializačný kód pre všetky jeho verejné vlastnosti do
+    /// InitializeComponent(). Explicitné skrytie týchto vlastností pred Designerom tomu predchádza.
+    ///
+    /// [DesignerCategory("")] na triede navyše rieši aj prípad, keď sa žiadne chyby netýkajú priamo
+    /// pretiahnutia na plátno - VS na pozadí skenuje všetky verejné triedy dediace z Form/Control/Component
+    /// pre Toolbox/IntelliSense, nezávisle od toho, či ich niekto reálne použije v Designeri. Prázdna
+    /// kategória hovorí tomuto skenovaniu "túto triedu vôbec neanalyzuj ako dizajnovateľnú".
     /// </summary>
+    [DesignerCategory("")]
     public class IconPickerDialog : Form
     {
         private readonly TextBox _txtDirectory;
@@ -41,6 +55,8 @@ namespace IconPicker
         private IconThumbnailControl _selectedThumb;
 
         /// <summary>Adresár, z ktorého sa načítavajú náhľady ikon/obrázkov.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string IconsDirectory
         {
             get => _txtDirectory.Text;
@@ -48,18 +64,26 @@ namespace IconPicker
         }
 
         /// <summary>Povolené prípony súborov (s bodkou), napr. ".png", ".bmp", ".ico".</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string[] AllowedExtensions { get; set; } = new string[] { ".png", ".bmp", ".ico" };
 
         /// <summary>Veľkosť náhľadu ikony v pixeloch (štvorec). Predvolené 32.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int ThumbnailSize { get; set; } = 32;
 
         /// <summary>Počet ikon na riadok pri predvolenej šírke okna (ovplyvňuje len počiatočnú šírku - pri zmene veľkosti okna sa mriežka prirodzene prelamuje).</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int IconsPerRow { get; set; } = 10;
 
         /// <summary>
         /// Cesta k súboru, ktorý používateľ vybral - buď dvojklikom / OK v zozname ikon,
         /// alebo cez tlačidlo "Vlastný súbor...". Platné len ak ShowDialog() vráti DialogResult.OK.
         /// </summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string SelectedFilePath { get; private set; }
 
         public IconPickerDialog() : this(null)

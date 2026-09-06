@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
@@ -8,6 +9,7 @@ namespace IconPicker
     /// Jedna položka v zozname ikon: malý štvorcový náhľad obrázka, ktorý sa dá vizuálne
     /// označiť ako vybraný (Selected) a reaguje na Click / DoubleClick.
     /// </summary>
+    [DesignerCategory("")]
     public class IconThumbnailControl : Panel
     {
         private readonly PictureBox _pictureBox;
@@ -17,6 +19,8 @@ namespace IconPicker
         public string FilePath { get; }
 
         /// <summary>Či je táto položka práve vizuálne označená ako vybraná.</summary>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool Selected
         {
             get => _selected;

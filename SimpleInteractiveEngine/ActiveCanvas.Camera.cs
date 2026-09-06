@@ -615,6 +615,7 @@ namespace SimpleDrawingEngine
 
             foreach (var p in Points) rawPoints.Add(ProjectRawXZ(p.World));
             foreach (var im in Images) rawPoints.Add(ProjectRawXZ(im.World));
+            foreach (var sh in Shapes) rawPoints.Add(ProjectRawXZ(sh.World));
 
             // Include the background image's 4 corners too, if one is loaded - the current camera
             // rotation can make any of them the extreme point, not just the "top-left" one.

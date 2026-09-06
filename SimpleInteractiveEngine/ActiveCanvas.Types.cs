@@ -260,6 +260,15 @@ namespace SimpleDrawingEngine
             CustomPolygon
         }
 
+        /// <summary>Preset label position relative to a ShapeMarker's bounds - a convenient alternative to
+        /// computing a pixel offset by hand (WithLabelOffset still works and takes priority if set).</summary>
+        public enum LabelAnchor
+        {
+            TopLeft, Top, TopRight,
+            Left, Center, Right,
+            BottomLeft, Bottom, BottomRight
+        }
+
         /// <summary>
         /// A simple vector shape (circle/ellipse/rectangle/rounded rectangle) anchored at a single point -
         /// no vertices, no per-corner editing. Behaves like ImageMarker: drag-and-drop moves the whole
@@ -271,10 +280,19 @@ namespace SimpleDrawingEngine
             public Guid Id { get; }
             public Vector3 World { get; private set; }
             public MarkerShapeType ShapeType { get; private set; }
-            public float Width { get; private set; } = 40f;
+
+            /// <summary>Width in meters by default (ScaleWithZoom = true) - matches Point3D/Polyline/Polygon,
+            /// which are always in meters. Switch to WithScaleWithZoom(false) for a fixed pixel size instead
+            /// (e.g. an icon-style marker that should stay readable at any zoom level).</summary>
+            public float Width { get; private set; } = 1f;
             public float? Height { get; private set; }
-            public float CornerRadius { get; private set; } = 8f; // only used for RoundedRectangle
-            public bool ScaleWithZoom { get; private set; }
+
+            /// <summary>Only used when ShapeType is RoundedRectangle. Same unit as Width (meters by default).</summary>
+            public float CornerRadius { get; private set; } = 0.15f;
+
+            /// <summary>True by default: Width/Height/CornerRadius are in meters and the shape scales with
+            /// zoom, like a real-world object. Set to false for a fixed on-screen pixel size instead (like a map pin).</summary>
+            public bool ScaleWithZoom { get; private set; } = true;
             public Brush? Brush { get; private set; }
             public Pen? Pen { get; private set; }
             public bool Selectable { get; private set; } = true;
@@ -284,6 +302,25 @@ namespace SimpleDrawingEngine
             public string Label { get; private set; } = "";
             public bool ShowLabel { get; private set; } = true;
             public PointF? LabelOffset { get; private set; }
+
+            /// <summary>Preset label position relative to the shape's bounds, used only when LabelOffset
+            /// isn't explicitly set (WithLabelOffset always takes priority when present).</summary>
+            public LabelAnchor LabelAnchor { get; private set; } = LabelAnchor.TopRight;
+
+            /// <summary>Text drawn INSIDE the shape's own bounds (not a floating label next to it) -
+            /// automatically word-wraps to fit, and honors explicit "\n" line breaks, since it's drawn via
+            /// GDI+'s own multi-line text layout. Leave empty (default) for no inner text.</summary>
+            public string InnerText { get; private set; } = "";
+            public Color InnerTextColor { get; private set; } = Color.Black;
+            public Font? InnerTextFont { get; private set; }
+
+            /// <summary>If true, InnerText's font size is automatically picked (within MinInnerTextFontSize..
+            /// MaxInnerTextFontSize) to best fill the shape's currently visible on-screen area - recalculated
+            /// every frame, so it adapts as you zoom or resize the shape. InnerTextFont, if set, still
+            /// supplies the font family/style - just not its size, which becomes dynamic.</summary>
+            public bool AutoScaleInnerTextFont { get; private set; }
+            public float MinInnerTextFontSize { get; private set; } = 6f;
+            public float MaxInnerTextFontSize { get; private set; } = 24f;
 
             /// <summary>Outline points for ShapeType.CustomPolygon, relative to the shape's own center and
             /// normalized to roughly -0.5..0.5 in both axes - Width/Height then scale this to the actual size.</summary>
@@ -298,6 +335,30 @@ namespace SimpleDrawingEngine
 
             public ShapeMarker WithShapeType(MarkerShapeType shapeType) { ShapeType = shapeType; return this; }
 
+            /// <summary>Preset label position (see LabelAnchor). Ignored once WithLabelOffset() is used - that always wins.</summary>
+            public ShapeMarker WithLabelAnchor(LabelAnchor anchor) { LabelAnchor = anchor; return this; }
+
+            /// <summary>Sets the text drawn inside the shape's own bounds. Wraps automatically and supports
+            /// explicit "\n" line breaks - this is separate from Label (the floating label next to the shape).</summary>
+            public ShapeMarker WithInnerText(string text) { InnerText = text; return this; }
+
+            public ShapeMarker WithInnerTextColor(Color color) { InnerTextColor = color; return this; }
+
+            /// <summary>Custom font for the inner text. If not set, uses the engine's default label font/size.
+            /// If AutoScaleInnerTextFont is on, only this font's family/style are used - its size is picked dynamically.</summary>
+            public ShapeMarker WithInnerTextFont(Font font) { InnerTextFont = font; return this; }
+
+            /// <summary>Turns on (or off) automatic font sizing for InnerText, so it grows/shrinks to best
+            /// fill the shape's current on-screen area instead of staying at one fixed size. Bounded by
+            /// minSize/maxSize so it never becomes unreadably small or absurdly large.</summary>
+            public ShapeMarker WithAutoScaleInnerText(bool enabled, float minSize = 6f, float maxSize = 24f)
+            {
+                AutoScaleInnerTextFont = enabled;
+                MinInnerTextFontSize = minSize;
+                MaxInnerTextFontSize = maxSize;
+                return this;
+            }
+
             /// <summary>
             /// Defines a custom outline as a set of points relative to the shape's own center, normalized
             /// so the shape roughly spans -0.5..0.5 in both axes (Width/Height then scale it to the actual
@@ -311,16 +372,18 @@ namespace SimpleDrawingEngine
                 return this;
             }
 
-            /// <summary>Size. In pixels (default), or in meters if ScaleWithZoom = true. If height is
-            /// omitted, the shape is as tall as it is wide (a circle instead of an ellipse, a square
-            /// instead of a rectangle).</summary>
+            /// <summary>Size in meters by default (ScaleWithZoom = true), or in pixels if you've called
+            /// WithScaleWithZoom(false). If height is omitted, the shape is as tall as it is wide (a circle
+            /// instead of an ellipse, a square instead of a rectangle).</summary>
             public ShapeMarker WithSize(float width, float? height = null) { Width = width; Height = height; return this; }
 
-            /// <summary>Corner radius for RoundedRectangle (same unit as Width - pixels, or meters if ScaleWithZoom). Ignored for other shapes.</summary>
+            /// <summary>Corner radius for RoundedRectangle (same unit as Width - meters by default, pixels if ScaleWithZoom is false). Ignored for other shapes.</summary>
             public ShapeMarker WithCornerRadius(float radius) { CornerRadius = radius; return this; }
 
-            /// <summary>If true, the shape grows/shrinks with zoom (Width/Height/CornerRadius are then in
-            /// meters). If false (default), it always has the same on-screen size regardless of zoom.</summary>
+            /// <summary>True by default: Width/Height/CornerRadius are in meters and the shape grows/shrinks
+            /// with zoom, like a real-world object - consistent with Point3D/Polyline/Polygon, which are
+            /// always in meters. Set to false for a fixed on-screen pixel size instead (e.g. an icon-style
+            /// marker that should stay the same visible size at any zoom level, like a map pin).</summary>
             public ShapeMarker WithScaleWithZoom(bool scale) { ScaleWithZoom = scale; return this; }
 
             public ShapeMarker WithBrush(Brush brush) { Brush = brush; return this; }

@@ -101,14 +101,14 @@ namespace SimpleDrawingEngine
             */
 
             // Kruh, pevná veľkosť v pixeloch
-            var circle = engine.AddShape(5, 3, 0, ActiveCanvas.MarkerShapeType.Circle,
-                label: "Senzor", brush: new SolidBrush(Color.Crimson), width: 24f);
+            var circle = engine.AddShape(5, 12, 0, ActiveCanvas.MarkerShapeType.Circle,
+                label: "Senzor", brush: new SolidBrush(Color.Crimson), width: 2f);
 
             // Zaoblený obdĺžnik, škáluje sa so zoomom (skutočná veľkosť vo svete)
             var zone2 = engine.AddShape(10, 5, 0, ActiveCanvas.MarkerShapeType.RoundedRectangle,
                 label: "Zóna\nfdfd", brush: new SolidBrush(Color.FromArgb(80, Color.Orange)),
                 pen: new Pen(Color.OrangeRed, 2f), width: 4f, height: 3f);
-            zone2.WithScaleWithZoom(true).WithCornerRadius(0.5f);
+            zone2.WithScaleWithZoom(true).WithCornerRadius(0.5f).WithInnerText("P=102 kPa\nT = 20 C\nm=25kg/h");
 
             var arrow = engine.AddCustomShape(5, 3, 0,
     new[] { (0f, -0.5f), (0.35f, 0.1f), (0.15f, 0.1f), (0.15f, 0.5f),
@@ -116,7 +116,19 @@ namespace SimpleDrawingEngine
     label: "Smer",
     brush: new SolidBrush(Color.DodgerBlue),
     pen: new Pen(Color.Navy, 1.5f),
-    width: 40f);
+    width: 2);
+
+            var box = engine.AddShape(5, 3, 0, ActiveCanvas.MarkerShapeType.Rectangle,
+            brush: new SolidBrush(Color.LightSteelBlue), pen: new Pen(Color.Navy, 0.5f), width: 1f, height: 2f).WithScaleWithZoom(true);
+
+            // pozícia labelu - preddefinovaná, prispôsobuje sa veľkosti tvaru pri zoome
+            box.WithLabel("Sklad A").WithLabelAnchor(ActiveCanvas.LabelAnchor.Bottom);
+
+            // text vo vnútri tvaru - viacriadkový, automaticky sa zalomí
+            box.WithInnerText("Kapacita: 500 ks\nPosledná inventúra: 03/2025")
+               .WithInnerTextColor(Color.DarkBlue).WithAutoScaleInnerText(true, minSize: 6f, maxSize: 20f); ;
+
+            engine.ZoomToFullExtent();           // 10% okraj (default)
         }
 
         /// <summary>Generates a simple "pin" icon (circle + point) directly in code, so the example is

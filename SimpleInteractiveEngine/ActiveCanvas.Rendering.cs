@@ -18,6 +18,7 @@ namespace SimpleDrawingEngine
         // without hunting through the drawing methods below.
         private static readonly Font LabelFont = new Font("Segoe UI", 8f, FontStyle.Bold);
         private static readonly Font ScaleBarFont = new Font("Segoe UI", 8f, FontStyle.Regular);
+        private static readonly Font InnerTextDefaultFont = new Font("Segoe UI", 9f, FontStyle.Regular);
         private const int HoverHaloAlpha = 55;
         private const int HoverRingAlpha = 230;
         private const int SelectionHighlightAlpha = 140;
@@ -87,6 +88,7 @@ namespace SimpleDrawingEngine
                 DrawPolygonFills(g);
                 DrawPolylineSegments(g);
                 DrawShapeMarkers(g);
+                DrawShapeMarkerInnerText(g);
                 DrawPoints(g);
                 DrawImages(g);
                 DrawPolylineLabels(g);
@@ -185,7 +187,7 @@ namespace SimpleDrawingEngine
         {
             using var defaultPen = new Pen(DefaultLineColor, 2f);
             using var selectionPen = new Pen(Color.FromArgb(SelectionHighlightAlpha, SelectedPointColor), 6f)
-                { StartCap = LineCap.Round, EndCap = LineCap.Round };
+            { StartCap = LineCap.Round, EndCap = LineCap.Round };
 
             foreach (var poly in Polylines)
             {
@@ -502,9 +504,100 @@ namespace SimpleDrawingEngine
 
                 var size = sh.ComputeScreenSize(_pixelsPerMeter);
                 var screen = Project(sh.World);
-                var offset = sh.LabelOffset ?? new PointF(size.Width / 2f + 2, -size.Height / 2f);
+                var offset = sh.LabelOffset ?? ComputeLabelAnchorOffset(sh.LabelAnchor, size);
                 DrawLabelWithBackdrop(g, sh.Label, new PointF(screen.X + offset.X, screen.Y + offset.Y));
             }
+        }
+
+        /// <summary>Turns a preset LabelAnchor into a pixel offset from the shape's center, based on its
+        /// current on-screen size - this is what makes the anchor "stick" to the shape's edge/corner
+        /// correctly even as it scales with zoom (a fixed pixel offset couldn't do that on its own).</summary>
+        private static PointF ComputeLabelAnchorOffset(LabelAnchor anchor, SizeF size, float gap = 4f)
+        {
+            float halfW = size.Width / 2f + gap;
+            float halfH = size.Height / 2f + gap;
+
+            return anchor switch
+            {
+                LabelAnchor.TopLeft => new PointF(-halfW, -halfH),
+                LabelAnchor.Top => new PointF(0, -halfH),
+                LabelAnchor.TopRight => new PointF(halfW, -halfH),
+                LabelAnchor.Left => new PointF(-halfW, 0),
+                LabelAnchor.Center => new PointF(0, 0),
+                LabelAnchor.Right => new PointF(halfW, 0),
+                LabelAnchor.BottomLeft => new PointF(-halfW, halfH),
+                LabelAnchor.Bottom => new PointF(0, halfH),
+                LabelAnchor.BottomRight => new PointF(halfW, halfH),
+                _ => new PointF(halfW, -halfH)
+            };
+        }
+
+        /// <summary>Draws InnerText inside a shape marker's own bounds - GDI+'s RectangleF overload of
+        /// DrawString handles multi-line word-wrap and explicit "\n" breaks natively, no manual layout needed.</summary>
+        private void DrawShapeMarkerInnerText(Graphics g)
+        {
+            using var format = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
+
+            foreach (var sh in Shapes)
+            {
+                if (string.IsNullOrEmpty(sh.InnerText)) continue;
+
+                var size = sh.ComputeScreenSize(_pixelsPerMeter);
+                var screen = Project(sh.World);
+
+                const float inset = 4f; // keep text off the shape's own outline
+                var textRect = new RectangleF(
+                    screen.X - size.Width / 2f + inset, screen.Y - size.Height / 2f + inset,
+                    Math.Max(0f, size.Width - inset * 2), Math.Max(0f, size.Height - inset * 2));
+
+                if (textRect.Width <= 0 || textRect.Height <= 0) continue;
+
+                var baseFont = sh.InnerTextFont ?? InnerTextDefaultFont;
+                using var textBrush = new SolidBrush(sh.InnerTextColor);
+
+                if (sh.AutoScaleInnerTextFont)
+                {
+                    float fitSize = FindBestFitFontSize(g, sh.InnerText, baseFont.FontFamily, baseFont.Style,
+                        textRect, sh.MinInnerTextFontSize, sh.MaxInnerTextFontSize, format);
+                    using var fitFont = new Font(baseFont.FontFamily, fitSize, baseFont.Style);
+                    g.DrawString(sh.InnerText, fitFont, textBrush, textRect, format);
+                }
+                else
+                {
+                    g.DrawString(sh.InnerText, baseFont, textBrush, textRect, format);
+                }
+            }
+        }
+
+        /// <summary>Binary-searches the largest font size (within min/max) at which the given text - wrapped
+        /// and possibly multi-line - still fits inside rect. ~8 iterations converge to sub-pixel precision,
+        /// cheap enough to redo every frame for a handful of shapes with inner text.</summary>
+        private static float FindBestFitFontSize(Graphics g, string text, FontFamily family, FontStyle style,
+            RectangleF rect, float minSize, float maxSize, StringFormat format)
+        {
+            float lo = minSize, hi = Math.Max(minSize, maxSize), best = minSize;
+
+            for (int i = 0; i < 8; i++)
+            {
+                float mid = (lo + hi) / 2f;
+                using var testFont = new Font(family, mid, style);
+                // Same StringFormat instance/overload as the actual DrawString call below - measuring with
+                // a different format (e.g. the plain 3-arg MeasureString overload's own default) can silently
+                // disagree on line-wrapping/line-height, which is exactly what made explicit "\n" breaks
+                // look "ignored": the fit-check passed using one layout, the draw call used another.
+                var measured = g.MeasureString(text, testFont, new SizeF(rect.Width, float.MaxValue), format);
+
+                if (measured.Width <= rect.Width && measured.Height <= rect.Height)
+                {
+                    best = mid;
+                    lo = mid; // fits - see if an even bigger size still fits
+                }
+                else
+                {
+                    hi = mid; // too big - shrink
+                }
+            }
+            return best;
         }
 
         /// <summary>Builds the GraphicsPath for a shape marker's outline - used consistently for the fill,

@@ -353,6 +353,39 @@ namespace SimpleDrawingEngine
         public bool ShowLabel { get => _shape.ShowLabel; set { _shape.WithShowLabel(value); _engine.Render(); } }
 
         [Category("Appearance")]
+        [Description("Preset label position relative to the shape. Ignored if you've set a custom pixel offset via code (WithLabelOffset).")]
+        public ActiveCanvas.LabelAnchor LabelAnchor { get => _shape.LabelAnchor; set { _shape.WithLabelAnchor(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("Text drawn INSIDE the shape's own bounds (wraps automatically) - separate from Label, which floats next to the shape.")]
+        public string InnerText { get => _shape.InnerText; set { _shape.WithInnerText(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        public Color InnerTextColor { get => _shape.InnerTextColor; set { _shape.WithInnerTextColor(value); _engine.Render(); } }
+
+        [Category("Appearance")]
+        [Description("If true, InnerText's font size automatically grows/shrinks to best fill the shape's current on-screen area (between the min/max sizes below).")]
+        public bool AutoScaleInnerTextFont
+        {
+            get => _shape.AutoScaleInnerTextFont;
+            set { _shape.WithAutoScaleInnerText(value, _shape.MinInnerTextFontSize, _shape.MaxInnerTextFontSize); _engine.Render(); }
+        }
+
+        [Category("Appearance")]
+        public float MinInnerTextFontSize
+        {
+            get => _shape.MinInnerTextFontSize;
+            set { _shape.WithAutoScaleInnerText(_shape.AutoScaleInnerTextFont, value, _shape.MaxInnerTextFontSize); _engine.Render(); }
+        }
+
+        [Category("Appearance")]
+        public float MaxInnerTextFontSize
+        {
+            get => _shape.MaxInnerTextFontSize;
+            set { _shape.WithAutoScaleInnerText(_shape.AutoScaleInnerTextFont, _shape.MinInnerTextFontSize, value); _engine.Render(); }
+        }
+
+        [Category("Appearance")]
         public ActiveCanvas.MarkerShapeType ShapeType { get => _shape.ShapeType; set { _shape.WithShapeType(value); _engine.Render(); } }
 
         [Category("Appearance")]

@@ -190,13 +190,14 @@ namespace SimpleDrawingEngine
 
         /// <summary>
         /// Adds a simple vector shape (circle/ellipse/rectangle/rounded rectangle) at a point in the world -
-        /// no vertices, drag-and-drop moves the whole thing at once. By default it has a fixed size in
-        /// pixels (independent of zoom) - call WithScaleWithZoom(true) on the returned instance for a
-        /// real-world size instead. x/y/z are RAW coordinates - if SetLocalOrigin() was called, the offset
-        /// is applied automatically.
+        /// no vertices, drag-and-drop moves the whole thing at once. By default it's sized in meters and
+        /// scales with zoom (ScaleWithZoom = true), consistent with points/polylines/polygons - call
+        /// WithScaleWithZoom(false) on the returned instance for a fixed pixel size instead (e.g. an
+        /// icon-style marker that should stay the same visible size at any zoom level). x/y/z are RAW
+        /// coordinates - if SetLocalOrigin() was called, the offset is applied automatically.
         /// </summary>
         public ShapeMarker AddShape(float x, float y, float z = 0f, MarkerShapeType shapeType = MarkerShapeType.Circle,
-            string label = "", Brush? brush = null, Pen? pen = null, float width = 40f, float? height = null,
+            string label = "", Brush? brush = null, Pen? pen = null, float width = 1f, float? height = null,
             bool selectable = true, bool draggable = true, bool hoverEnabled = true, Guid? id = null)
         {
             var local = ToLocal(new Vector3(x, y, z));
@@ -224,12 +225,12 @@ namespace SimpleDrawingEngine
         /// relativePoints define the outline relative to the shape's own center, normalized so it roughly
         /// spans -0.5..0.5 in both axes - width/height then scale that outline to the actual size:
         ///
-        ///     // a simple diamond
+        ///     // a simple diamond, 2 meters wide (default unit is meters - see AddShape)
         ///     engine.AddCustomShape(5, 3, 0, new[] { (0f,-0.5f), (0.5f,0f), (0f,0.5f), (-0.5f,0f) },
-        ///         label: "Waypoint", brush: new SolidBrush(Color.Gold), width: 30f);
+        ///         label: "Waypoint", brush: new SolidBrush(Color.Gold), width: 2f);
         /// </summary>
         public ShapeMarker AddCustomShape(float x, float y, float z, IEnumerable<(float x, float y)> relativePoints,
-            string label = "", Brush? brush = null, Pen? pen = null, float width = 40f, float? height = null,
+            string label = "", Brush? brush = null, Pen? pen = null, float width = 1f, float? height = null,
             bool selectable = true, bool draggable = true, bool hoverEnabled = true, Guid? id = null)
         {
             var local = ToLocal(new Vector3(x, y, z));

@@ -465,6 +465,10 @@ namespace SimpleDrawingEngine
         public ActiveCanvas.ConnectorRouting Routing { get => _connector.Routing; set { _connector.WithRouting(value); _engine.Render(); } }
 
         [Category("Appearance")]
+        [Description("If true, the attachment side on each shape is picked automatically based on their relative position, and re-picked live as either shape is dragged. Overrides FromAnchor/ToAnchor below.")]
+        public bool AutoAnchors { get => _connector.AutoAnchors; set { _connector.WithAutoAnchors(value); _engine.Render(); } }
+
+        [Category("Appearance")]
         [Description("Which point on the \"From\" shape the line starts at.")]
         public ActiveCanvas.LabelAnchor FromAnchor { get => _connector.FromAnchor; set { _connector.WithAnchors(value, _connector.ToAnchor); _engine.Render(); } }
 

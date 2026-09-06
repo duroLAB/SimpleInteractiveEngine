@@ -135,11 +135,11 @@ namespace SimpleDrawingEngine
             var end = engine.AddShape(6, 3, 0, ActiveCanvas.MarkerShapeType.Rectangle, label: "Výstup", width: 2f, brush: new SolidBrush(Color.FromArgb(80, Color.Orange)));
 
             // priama čiara so šípkou
-            var direct = engine.AddConnector(start, end, label: "priamo")
-                .WithAnchors(ActiveCanvas.LabelAnchor.Right, ActiveCanvas.LabelAnchor.Left);
+         /*   var direct = engine.AddConnector(start, end, label: "priamo")
+                .WithAnchors(ActiveCanvas.LabelAnchor.Right, ActiveCanvas.LabelAnchor.Left);*/
 
             // lomená (najprv X, potom Y), hrubšia čiara, bez šípky
-            var elbow = engine.AddConnector(start, end, showArrow: true, routing: ActiveCanvas.ConnectorRouting.Orthogonal).WithAnchors(ActiveCanvas.LabelAnchor.Right, ActiveCanvas.LabelAnchor.Left)
+            var elbow = engine.AddConnector(start, end, showArrow: true, routing: ActiveCanvas.ConnectorRouting.Orthogonal).WithAutoAnchors()
                 .WithPen(new Pen(Color.SteelBlue, 3f)).WithLabel("spojnica");
 
 

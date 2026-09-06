@@ -545,12 +545,21 @@ namespace SimpleDrawingEngine
                 }
                 else
                 {
-                    // No custom position - use the elbow corner for an Orthogonal route (a natural spot for
-                    // a label in flowchart-style diagrams), or the segment midpoint for a Straight one.
+                    // No custom position - for a multi-segment (Orthogonal) route, use the midpoint of the
+                    // middle "crossing" segment (a natural spot in flowchart-style diagrams); for a plain
+                    // Straight route (just 2 points), use the midpoint of the whole line.
                     var route = ComputeConnectorRoute(connector);
-                    labelScreen = route.Length == 3
-                        ? route[1]
-                        : new PointF((route[0].X + route[^1].X) / 2f, (route[0].Y + route[^1].Y) / 2f);
+                    if (route.Length == 2)
+                    {
+                        labelScreen = new PointF((route[0].X + route[1].X) / 2f, (route[0].Y + route[1].Y) / 2f);
+                    }
+                    else
+                    {
+                        int midIndex = route.Length / 2;
+                        var a = route[midIndex - 1];
+                        var b = route[midIndex];
+                        labelScreen = new PointF((a.X + b.X) / 2f, (a.Y + b.Y) / 2f);
+                    }
                 }
 
                 DrawLabelWithBackdrop(g, connector.Label, labelScreen);

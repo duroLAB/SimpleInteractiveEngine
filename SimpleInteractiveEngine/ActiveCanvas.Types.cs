@@ -436,6 +436,12 @@ namespace SimpleDrawingEngine
             public ShapeMarker To { get; }
             public LabelAnchor FromAnchor { get; private set; } = LabelAnchor.Center;
             public LabelAnchor ToAnchor { get; private set; } = LabelAnchor.Center;
+
+            /// <summary>If true, FromAnchor/ToAnchor are ignored and instead recomputed every frame from
+            /// the shapes' current relative position (see ActiveCanvas.GetConnectorAnchors) - the connector
+            /// then automatically re-picks the most sensible side as either shape gets dragged around.</summary>
+            public bool AutoAnchors { get; private set; }
+
             public ConnectorRouting Routing { get; private set; } = ConnectorRouting.Straight;
             public Pen? Pen { get; private set; }
             public bool ShowArrow { get; private set; } = true;
@@ -457,8 +463,14 @@ namespace SimpleDrawingEngine
                 To = to ?? throw new ArgumentNullException(nameof(to));
             }
 
-            /// <summary>Which point on each shape the line attaches to (e.g. Right on the "from" shape, Left on the "to" shape).</summary>
+            /// <summary>Which point on each shape the line attaches to (e.g. Right on the "from" shape, Left on the "to" shape).
+            /// Ignored if WithAutoAnchors(true) is set.</summary>
             public ShapeConnector WithAnchors(LabelAnchor fromAnchor, LabelAnchor toAnchor) { FromAnchor = fromAnchor; ToAnchor = toAnchor; return this; }
+
+            /// <summary>Turns on (or off) automatic anchor selection - when on, the connector always attaches
+            /// to whichever side of each shape makes sense given their current relative position, recomputed
+            /// live every frame (so it keeps up as you drag either shape around). Overrides WithAnchors().</summary>
+            public ShapeConnector WithAutoAnchors(bool enabled = true) { AutoAnchors = enabled; return this; }
 
             public ShapeConnector WithRouting(ConnectorRouting routing) { Routing = routing; return this; }
             public ShapeConnector WithPen(Pen pen) { Pen = pen; return this; }

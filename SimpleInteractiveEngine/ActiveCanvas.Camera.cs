@@ -169,28 +169,85 @@ namespace SimpleDrawingEngine
         /// </summary>
         private PointF[] ComputeConnectorRoute(ShapeConnector connector)
         {
+            var fromAnchor = connector.FromAnchor;
+            var toAnchor = connector.ToAnchor;
+
+            if (connector.AutoAnchors)
+            {
+                var picked = GetConnectorAnchors(connector.From.World.X, connector.From.World.Y,
+                    connector.To.World.X, connector.To.World.Y);
+                fromAnchor = picked.Start;
+                toAnchor = picked.End;
+            }
+
             var fromSize = connector.From.ComputeScreenSize(_pixelsPerMeter);
             var fromCenter = Project(connector.From.World);
-            var fromPoint = ComputeAttachmentScreenPoint(connector.FromAnchor, fromCenter, fromSize);
+            var fromPoint = ComputeAttachmentScreenPoint(fromAnchor, fromCenter, fromSize);
 
             var toSize = connector.To.ComputeScreenSize(_pixelsPerMeter);
             var toCenter = Project(connector.To.World);
-            var toPoint = ComputeAttachmentScreenPoint(connector.ToAnchor, toCenter, toSize);
+            var toPoint = ComputeAttachmentScreenPoint(toAnchor, toCenter, toSize);
 
             if (connector.Routing != ConnectorRouting.Orthogonal)
                 return new[] { fromPoint, toPoint };
 
-            // The elbow's first segment follows the direction the FromAnchor naturally points: Top/Bottom
-            // anchors leave the shape vertically first, everything else (Left/Right/Center/corners)
-            // leaves horizontally first - this matters because e.g. Top/Bottom share their X with Center,
-            // so a horizontal-first elbow from one of those would visually look like it starts at the center.
-            bool leaveVertically = connector.FromAnchor is LabelAnchor.Top or LabelAnchor.Bottom;
+            // The elbow's first segment follows the direction the (possibly auto-picked) FromAnchor
+            // naturally points: Top/Bottom leave the shape vertically first, everything else leaves
+            // horizontally first - this matters because e.g. Top/Bottom share their X with Center, so a
+            // horizontal-first elbow from one of those would visually look like it starts at the center.
+            //
+            // Rather than a single sharp corner, the route breaks at the halfway point along that first
+            // axis, crosses over, then finishes along the same axis again - a symmetric "Z" shape that
+            // looks more deliberate than an L-shaped elbow, especially when both shapes are roughly level.
+            bool leaveVertically = fromAnchor is LabelAnchor.Top or LabelAnchor.Bottom;
 
-            var elbow = leaveVertically
-                ? new PointF(fromPoint.X, toPoint.Y)
-                : new PointF(toPoint.X, fromPoint.Y);
+            if (leaveVertically)
+            {
+                float midY = (fromPoint.Y + toPoint.Y) / 2f;
+                return new[]
+                {
+                    fromPoint,
+                    new PointF(fromPoint.X, midY),
+                    new PointF(toPoint.X, midY),
+                    toPoint
+                };
+            }
 
-            return new[] { fromPoint, elbow, toPoint };
+            float midX = (fromPoint.X + toPoint.X) / 2f;
+            return new[]
+            {
+                fromPoint,
+                new PointF(midX, fromPoint.Y),
+                new PointF(midX, toPoint.Y),
+                toPoint
+            };
+        }
+
+        /// <summary>
+        /// Picks the most sensible attachment side on each shape based on their relative world position -
+        /// whichever axis (X or Y) has the greater separation "wins", and the specific side follows the
+        /// direction of travel along that axis. Use via ShapeConnector.WithAutoAnchors() to have this
+        /// recomputed live every frame (so the connector re-picks sides as you drag a shape around), or
+        /// call it directly for a one-off WithAnchors(...) choice.
+        /// </summary>
+        public static (LabelAnchor Start, LabelAnchor End) GetConnectorAnchors(double xStart, double yStart, double xEnd, double yEnd)
+        {
+            double dx = Math.Abs(xEnd - xStart);
+            double dy = Math.Abs(yEnd - yStart);
+
+            if (dx < dy)
+            {
+                // World Y increases UPWARD on screen (screenY = -y*ppm) - the opposite of typical screen/image
+                // coordinates where Y grows downward. So a smaller yStart means Start sits lower on screen
+                // than End, and should therefore leave through its Top (facing up towards End), not Bottom.
+                return yStart <= yEnd
+                    ? (LabelAnchor.Top, LabelAnchor.Bottom)
+                    : (LabelAnchor.Bottom, LabelAnchor.Top);
+            }
+
+            return xStart <= xEnd
+                ? (LabelAnchor.Right, LabelAnchor.Left)
+                : (LabelAnchor.Left, LabelAnchor.Right);
         }
 
         /// <summary>Finds the connector whose line was hit within a pixel tolerance (checks every segment of its route).

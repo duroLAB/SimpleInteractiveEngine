@@ -140,7 +140,7 @@ namespace SimpleInteractiveEngine.TestApp
         {
             engine.ZoomToFullExtent();           // 10% okraj (default)
                                                  //   engine.ZoomToFullExtent(0f);         // presne na okraj, bez rezervy
-                                                 //   engine.ZoomToFullExtent(0.25f);      // väčší okraj
+            engine.ApplyDarkTheme();                                     //   engine.ZoomToFullExtent(0.25f);      // väčší okraj
         }
 
         private async void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)

@@ -79,7 +79,7 @@ namespace SimpleDrawingEngine
             using (var g = Graphics.FromImage(_buffer))
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.Clear(Color.White);
+                g.Clear(CanvasBackgroundColor);
 
                 DrawBackgroundImage(g);
                 CustomBackgroundPaint?.Invoke(this, new CanvasPaintEventArgs(g));
@@ -126,7 +126,7 @@ namespace SimpleDrawingEngine
         {
             if (GroundGridExtent <= 0) return;
 
-            using var pen = new Pen(Color.Gainsboro, 1f);
+            using var pen = new Pen(GridColor, 1f);
             int n = (int)GroundGridExtent;
 
             for (int i = -n; i <= n; i++)
@@ -233,12 +233,12 @@ namespace SimpleDrawingEngine
         /// </summary>
         private void DrawLabelWithBackdrop(Graphics g, string label, PointF screen)
         {
-            using var textBrush = new SolidBrush(Color.Black);
+            using var textBrush = new SolidBrush(LabelTextColor);
             var size = g.MeasureString(label, LabelFont);
 
             var backRect = new RectangleF(screen.X - size.Width / 2f - 3f, screen.Y - size.Height / 2f - 1f,
                 size.Width + 6f, size.Height + 2f);
-            using (var backBrush = new SolidBrush(Color.FromArgb(LabelBackdropAlpha, Color.White)))
+            using (var backBrush = new SolidBrush(Color.FromArgb(LabelBackdropAlpha, LabelBackdropColor)))
                 g.FillRectangle(backBrush, backRect);
 
             g.DrawString(label, LabelFont, textBrush, screen.X - size.Width / 2f, screen.Y - size.Height / 2f);
@@ -268,18 +268,18 @@ namespace SimpleDrawingEngine
 
             // A subtle semi-transparent backdrop - so the scale bar is readable even on a dark/colorful background.
             using (var path = RoundedRect(boxRect, 6f))
-            using (var backBrush = new SolidBrush(Color.FromArgb(200, Color.White)))
+            using (var backBrush = new SolidBrush(Color.FromArgb(200, LabelBackdropColor)))
                 g.FillPath(backBrush, path);
 
             float barLeft = boxRight - padding - barWidth;
             float barY = boxRect.Bottom - padding;
 
-            using var barPen = new Pen(Color.FromArgb(210, Color.Black), 1.5f);
+            using var barPen = new Pen(Color.FromArgb(210, LabelTextColor), 1.5f);
             g.DrawLine(barPen, barLeft, barY, boxRight - padding, barY);
             g.DrawLine(barPen, barLeft, barY - 4, barLeft, barY + 4);
             g.DrawLine(barPen, boxRight - padding, barY - 4, boxRight - padding, barY + 4);
 
-            using var textBrush = new SolidBrush(Color.FromArgb(220, Color.Black));
+            using var textBrush = new SolidBrush(Color.FromArgb(220, LabelTextColor));
             g.DrawString(label, ScaleBarFont, textBrush,
                 boxRect.X + (boxWidth - textSize.Width) / 2f, boxRect.Y + padding * 0.4f);
         }
@@ -323,7 +323,7 @@ namespace SimpleDrawingEngine
 
         private void DrawPoints(Graphics g)
         {
-            using var textBrush = new SolidBrush(Color.Black);
+            using var textBrush = new SolidBrush(LabelTextColor);
 
             // Simple "painter's algorithm" - draw the farther points first, then the closer ones.
             // In pure 2D view all points have the same Z=0 depth, so the order is stable based on insertion.

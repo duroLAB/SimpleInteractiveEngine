@@ -65,6 +65,22 @@ namespace SimpleDrawingEngine
         /// <summary>Default polygon outline color, used when it has no custom OutlinePen.</summary>
         public Color DefaultPolygonOutlineColor { get; set; } = Color.SteelBlue;
 
+        // ---- "Chrome" colors - background/grid/text, as opposed to the colors above which are for your
+        // own content (points/lines/areas). Separated out specifically so ApplyDarkTheme()/ApplyLightTheme()
+        // can restyle the canvas itself without silently changing colors you picked for your own data. ----
+
+        /// <summary>Canvas background (clear) color.</summary>
+        public Color CanvasBackgroundColor { get; set; } = Color.White;
+
+        /// <summary>Ground grid line color (see GroundGridExtent).</summary>
+        public Color GridColor { get; set; } = Color.Gainsboro;
+
+        /// <summary>Text color for point/polyline/polygon/shape/connector labels and the scale bar.</summary>
+        public Color LabelTextColor { get; set; } = Color.Black;
+
+        /// <summary>Backdrop color behind labels and the scale bar (drawn with some transparency regardless of this color).</summary>
+        public Color LabelBackdropColor { get; set; } = Color.White;
+
         /// <summary>Half-length of the ground grid (Z = 0), in meters. Set to 0 to disable the grid.</summary>
         public float GroundGridExtent { get; set; } = 10f;
 

@@ -143,6 +143,22 @@ namespace SimpleDrawingEngine
                 .WithPen(new Pen(Color.SteelBlue, 3f)).WithLabel("spojnica");
 
 
+
+            var square0 = engine.AddShape(0, 0, 0, ActiveCanvas.MarkerShapeType.Rectangle, "Zone 0",
+    brush: HatchBrushes.CreateDotPatternBrush(spacing: 12f, dotRadius: 2f),
+    pen: new Pen(Color.Black, 1f), width: 2f, height: 2f);
+
+            var square1 = engine.AddShape(3, 0, 0, ActiveCanvas.MarkerShapeType.Rectangle, "Zone 1",
+                brush: new HatchBrush(HatchStyle.DiagonalCross, Color.Black, Color.Transparent),
+                pen: new Pen(Color.Black, 1f), width: 2f, height: 2f);
+
+            var square2 = engine.AddShape(6, 0, 0, ActiveCanvas.MarkerShapeType.Rectangle, "Zone 2",
+                brush: new HatchBrush(HatchStyle.ForwardDiagonal, Color.Black, Color.Transparent),
+                pen: new Pen(Color.Black, 1f), width: 2f, height: 2f);
+
+            engine.ZoomToFullExtent();
+
+
             engine.ZoomToFullExtent();           // 10% okraj (default)
         }
 

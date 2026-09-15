@@ -9,7 +9,7 @@ namespace SimpleInteractiveEngine.TestApp
     public partial class MainForm : Form
     {
         ActiveCanvas engine;
-
+        private bool _isDark;
         public MainForm()
         {
             InitializeComponent();
@@ -50,8 +50,8 @@ namespace SimpleInteractiveEngine.TestApp
             engine.PolygonDoubleClicked += (s, pg) => ShowPropertyDialog(pg);
             engine.ImageDoubleClicked += (s, im) => ShowPropertyDialog(im);
 
-            
-           // engine.PointPlaced += (s, p) => { engine.ShowBusyOverlay("Saving point...");p.WithBrush(b) };
+
+            // engine.PointPlaced += (s, p) => { engine.ShowBusyOverlay("Saving point...");p.WithBrush(b) };
 
 
             engine.CustomBackgroundPaint += (s, e) =>
@@ -69,7 +69,7 @@ namespace SimpleInteractiveEngine.TestApp
             };
         }
 
-      
+
         private void ShowPropertyDialog(object item)
         {
             var grid = engine.CreatePropertyGrid(item);
@@ -159,6 +159,24 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButtonLengthMeasure_Click(object sender, EventArgs e)
         {
             engine.StartMeasuring();
+        }
+
+        private void toolStripButtonDarkMode_Click(object sender, EventArgs e)
+        {
+            _isDark = !_isDark;
+
+            if (_isDark)
+            {
+                AppTheme.ApplyDark(this);
+                engine.ApplyDarkTheme();
+                toolStripButtonDarkMode.Text = "☀ Svetlý režim";
+            }
+            else
+            {
+                AppTheme.ApplyLight(this);
+                engine.ApplyLightTheme();
+                toolStripButtonDarkMode.Text = "🌙 Tmavý režim";
+            }
         }
     }
 }

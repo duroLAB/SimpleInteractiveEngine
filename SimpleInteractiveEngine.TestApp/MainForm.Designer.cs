@@ -46,6 +46,7 @@
             toolStripButtonFullZoom = new ToolStripButton();
             imageList1 = new ImageList(components);
             statusStrip1 = new StatusStrip();
+            toolStripButtonDarkMode = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -63,7 +64,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom, toolStripButtonDarkMode });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -194,6 +195,16 @@
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
+            // toolStripButtonDarkMode
+            // 
+            toolStripButtonDarkMode.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonDarkMode.Image = (Image)resources.GetObject("toolStripButtonDarkMode.Image");
+            toolStripButtonDarkMode.ImageTransparentColor = Color.Magenta;
+            toolStripButtonDarkMode.Name = "toolStripButtonDarkMode";
+            toolStripButtonDarkMode.Size = new Size(36, 36);
+            toolStripButtonDarkMode.Text = "toolStripButton1";
+            toolStripButtonDarkMode.Click += toolStripButtonDarkMode_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -230,5 +241,6 @@
         private ToolStripButton toolStripButtonClearAll;
         private ToolStripButton toolStripButtonLengthMeasure;
         private ToolStripSeparator toolStripSeparator3;
+        private ToolStripButton toolStripButtonDarkMode;
     }
 }

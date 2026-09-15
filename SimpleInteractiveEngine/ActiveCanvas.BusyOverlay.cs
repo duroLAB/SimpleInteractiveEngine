@@ -8,6 +8,7 @@ namespace SimpleDrawingEngine
         // A simple "please wait" overlay drawn directly on the canvas - useful around any operation that
         // might take a noticeable moment (loading a large background image, parsing a big DXF file...).
         // Just two calls: ShowBusyOverlay() before the slow work, HideBusyOverlay() after.
+        test
 
         #region Busy overlay
 

@@ -608,7 +608,7 @@ namespace SimpleDrawingEngine
             _pictureBox.Cursor = Cursors.Default;
             Render();
 
-            MeasurementCompleted?.Invoke(this, Vector3.Distance(_measureStart.Value, _measureEnd.Value));
+            MeasurementCompleted?.Invoke(this, MeasureWorldDistance(_measureStart.Value, _measureEnd.Value));
         }
 
         /// <summary>
@@ -746,7 +746,7 @@ namespace SimpleDrawingEngine
                 (screenAnchor.X - _panOffsetPixels.X) / _pixelsPerMeter,
                 (screenAnchor.Y - _panOffsetPixels.Y) / _pixelsPerMeter);
 
-            _pixelsPerMeter = Math.Max(_minPixelsPerMeter, Math.Min(_maxPixelsPerMeter, _pixelsPerMeter * factor));
+            _pixelsPerMeter = ClampPixelsPerMeter(_pixelsPerMeter * factor);
 
             _panOffsetPixels = new PointF(
                 screenAnchor.X - rawBefore.X * _pixelsPerMeter,
@@ -801,7 +801,7 @@ namespace SimpleDrawingEngine
             float ppmX = viewW / (spanX * marginMultiplier);
             float ppmZ = viewH / (spanZ * marginMultiplier);
 
-            _pixelsPerMeter = Math.Max(_minPixelsPerMeter, Math.Min(_maxPixelsPerMeter, Math.Min(ppmX, ppmZ)));
+            _pixelsPerMeter = ClampPixelsPerMeter(Math.Min(ppmX, ppmZ));
 
             // Center the content's bounding box in the middle of the view - same screenX/screenY formulas
             // as Project(), just solved backwards for the pan offset instead of the screen position.

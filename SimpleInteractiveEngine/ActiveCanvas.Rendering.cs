@@ -81,6 +81,7 @@ namespace SimpleDrawingEngine
                 g.SmoothingMode = SmoothingMode.AntiAlias;
                 g.Clear(CanvasBackgroundColor);
 
+                DrawOsmTiles(g);
                 DrawBackgroundImage(g);
                 CustomBackgroundPaint?.Invoke(this, new CanvasPaintEventArgs(g));
                 DrawGroundGrid(g);
@@ -100,6 +101,7 @@ namespace SimpleDrawingEngine
                 DrawDrawingPreview(g);
                 DrawMeasurement(g);
                 DrawScaleBar(g, _buffer.Width, _buffer.Height);
+                DrawOsmAttribution(g);
             }
 
             _pictureBox.Invalidate();
@@ -249,9 +251,13 @@ namespace SimpleDrawingEngine
         {
             if (_pixelsPerMeter <= 0 || canvasWidth < 60 || canvasHeight < 40) return;
 
+            // Pixels per REAL ground meter - the same as _pixelsPerMeter, except while the OSM layer is on
+            // (Web Mercator world units are stretched by 1/cos(latitude) compared to real meters).
+            float groundPixelsPerMeter = _pixelsPerMeter / GroundMetersPerWorldUnit();
+
             const float targetPixelWidth = 90f;
-            float niceMeters = NiceRoundNumber(targetPixelWidth / _pixelsPerMeter);
-            float barWidth = niceMeters * _pixelsPerMeter;
+            float niceMeters = NiceRoundNumber(targetPixelWidth / groundPixelsPerMeter);
+            float barWidth = niceMeters * groundPixelsPerMeter;
             string label = FormatMeters(niceMeters);
 
             var textSize = g.MeasureString(label, ScaleBarFont);
@@ -775,7 +781,7 @@ namespace SimpleDrawingEngine
             g.FillEllipse(markerBrush, startScreen.X - markerRadius, startScreen.Y - markerRadius, markerRadius * 2, markerRadius * 2);
             g.FillEllipse(markerBrush, endScreen.X - markerRadius, endScreen.Y - markerRadius, markerRadius * 2, markerRadius * 2);
 
-            float distance = Vector3.Distance(_measureStart.Value, endWorld);
+            float distance = MeasureWorldDistance(_measureStart.Value, endWorld);
             var midScreen = new PointF((startScreen.X + endScreen.X) / 2f, (startScreen.Y + endScreen.Y) / 2f);
             DrawLabelWithBackdrop(g, FormatMeters(distance), midScreen);
         }

@@ -1,5 +1,6 @@
 using SimpleDrawingEngine;
 using SimpleInteractiveEngine;
+using System.Globalization;
 using System.Numerics;
 using System.Windows.Forms;
 using System.Xml.Linq;
@@ -10,6 +11,11 @@ namespace SimpleInteractiveEngine.TestApp
     {
         ActiveCanvas engine;
         private bool _isDark;
+
+        // OSM demo - Bratislava, Hlavne namestie
+        private const double DemoLatitude = 48.1437;
+        private const double DemoLongitude = 17.1078;
+        private bool _geoDemoAdded;
         public MainForm()
         {
             InitializeComponent();
@@ -28,6 +34,14 @@ namespace SimpleInteractiveEngine.TestApp
                engine.ZoomToFullExtent();*/
 
             toolStripButton3D2Dview.Image = imageList1.Images[1];
+
+            // Status bar: GPS position under the cursor while the OSM layer is on.
+            pictureBox1.MouseMove += (s, e) =>
+            {
+                var geo = engine.IsOpenStreetMapEnabled ? engine.ScreenToLatLon(e.Location) : null;
+                toolStripStatusLabelCoords.Text = geo == null ? "" : string.Format(CultureInfo.InvariantCulture,
+                    "Lat {0:F6}   Lon {1:F6}   |   OSM zoom {2}", geo.Value.Latitude, geo.Value.Longitude, engine.OsmCurrentZoom);
+            };
 
             this.KeyPreview = true;
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) engine.CancelDrawing(); };
@@ -159,6 +173,44 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButtonLengthMeasure_Click(object sender, EventArgs e)
         {
             engine.StartMeasuring();
+        }
+
+        private void toolStripButtonOsm_Click(object sender, EventArgs e)
+        {
+            if (toolStripButtonOsm.Checked)
+            {
+                if (!_geoDemoAdded)
+                {
+                    AddGeoDemo();
+                    _geoDemoAdded = true;
+                }
+
+                engine.OsmUserAgent = "ActiveCanvas.TestApp/1.0.1 (+https://github.com/duroLAB/SimpleInteractiveEngine)";
+                engine.EnableOpenStreetMap();
+                engine.ZoomToLatLon(DemoLatitude, DemoLongitude, zoomLevel: 16);
+            }
+            else
+            {
+                engine.DisableOpenStreetMap();
+                toolStripStatusLabelCoords.Text = "";
+                engine.ZoomToFullExtent();
+            }
+        }
+
+        /// <summary>A few items placed by GPS coordinates, to check they sit on the right spot of the map.</summary>
+        private void AddGeoDemo()
+        {
+            // Local origin in the middle of the area of interest - keeps float coordinates precise.
+            // NOTE: in a real app call this BEFORE adding any content. Here the demo scene (built in local
+            // meters around 0,0) already exists, so it simply ends up sitting on Hlavne namestie.
+            engine.SetLocalOriginLatLon(DemoLatitude, DemoLongitude);
+
+            var castle = engine.CreatePointLatLon(48.14216, 17.10004, label: "Bratislavsky hrad")
+                .WithBrush(new SolidBrush(Color.Crimson)).WithShape(ActiveCanvas.PointShape.Star).WithSize(10f);
+            var gate = engine.CreatePointLatLon(48.14513, 17.10668, label: "Michalska brana")
+                .WithBrush(new SolidBrush(Color.Crimson)).WithShape(ActiveCanvas.PointShape.Star).WithSize(10f);
+
+            engine.AddPolyline(new[] { castle, gate }, "Hrad - Michalska brana", new Pen(Color.Crimson, 2.5f));
         }
 
         private void toolStripButtonDarkMode_Click(object sender, EventArgs e)

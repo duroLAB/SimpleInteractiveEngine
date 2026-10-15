@@ -47,6 +47,8 @@ hit-testing — done properly once, instead of rebuilt from scratch for every ne
   (S-JTSK, UTM, ...)
 - A custom render hook (`CustomBackgroundPaint`) for drawing any custom background yourself (e.g. a
   parsed DXF drawing)
+- An optional OpenStreetMap tile layer (or any other XYZ tile source) with GPS (WGS84) helpers -
+  background download, memory + disk cache, real ground distances in the scale bar and measuring tool
 
 **UI integration**
 - `CreatePropertyGrid()` — a ready-made `PropertyGrid` bound to the selected item; double-click → a
@@ -175,6 +177,30 @@ engine.ZoomToFullExtent();
 engine.SetBackgroundImage(bitmap, worldX: 0, worldY: 0, worldWidthMeters: 250f);
 ```
 
+### OpenStreetMap tile layer
+
+```csharp
+// While the layer is on, RAW world coordinates are Web Mercator meters (EPSG:3857).
+engine.SetLocalOriginLatLon(48.1437, 17.1078);              // once, before adding content (float precision)
+engine.OsmUserAgent = "MyApp/1.0 (+https://example.com)";   // required by the OSM tile usage policy
+engine.EnableOpenStreetMap();
+engine.ZoomToLatLon(48.1437, 17.1078, zoomLevel: 16);
+
+// place content by GPS coordinates
+var castle = engine.CreatePointLatLon(48.14216, 17.10004, label: "Castle");
+var gate = engine.CreatePointLatLon(48.14513, 17.10668, label: "Gate");
+engine.AddPolyline(new[] { castle, gate }, "Route");
+
+// GPS position under the cursor
+var geo = engine.ScreenToLatLon(mousePosition);   // (Latitude, Longitude)? - null in a front/side view
+```
+
+Tiles load in the background (max. 2 parallel requests), are cached in memory and on disk
+(`%LOCALAPPDATA%\ActiveCanvas\TileCache`, 7 days by default), and a cached lower-zoom tile is stretched
+in place while a tile is still loading. Another tile source: set `OsmTileUrlTemplate` and `OsmAttribution`.
+Please respect the [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/) - heavy
+use needs your own tile server or a commercial provider.
+
 ### Interactive drawing and measuring
 
 ```csharp
@@ -210,6 +236,7 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `ActiveCanvas.Rendering.cs` | All drawing |
 | `ActiveCanvas.PropertyGrid.cs` | `PropertyGrid` integration |
 | `ActiveCanvas.GeoTiff.cs` | Georeferencing from a world file / GeoTIFF tags |
+| `ActiveCanvas.OpenStreetMap.cs` | OSM/XYZ tile layer, Web Mercator and GPS helpers, tile cache |
 | `ActiveCanvas.BusyOverlay.cs` | "Please wait" overlay for slower operations |
 | `ActiveCanvas.Cursors.cs` | Custom cursor for drawing/placement |
 

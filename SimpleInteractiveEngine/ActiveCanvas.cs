@@ -109,8 +109,8 @@ namespace SimpleDrawingEngine
         private float _yawDeg = 0f;
         private float _pitchDeg = 90f;
         private float _pixelsPerMeter = 10f;
-        private readonly float _minPixelsPerMeter = 0.5f;
-        private readonly float _maxPixelsPerMeter = 800f;
+        private float _minPixelsPerMeter = 0.5f;
+        private float _maxPixelsPerMeter = 800f;
         private PointF _panOffsetPixels = PointF.Empty; // in pixels, also includes centering
 
         // ---- UI wiring ----
@@ -139,6 +139,31 @@ namespace SimpleDrawingEngine
         private object? _selectedShape;
 
         public float PixelsPerMeter => _pixelsPerMeter;
+
+        /// <summary>Lower zoom limit (how far you can zoom out), in screen pixels per world meter. While the
+        /// OpenStreetMap layer is on, zooming out is additionally allowed down to the whole world.</summary>
+        public float MinPixelsPerMeter
+        {
+            get => _minPixelsPerMeter;
+            set => _minPixelsPerMeter = value > 0f ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Upper zoom limit (how far you can zoom in), in screen pixels per world meter.</summary>
+        public float MaxPixelsPerMeter
+        {
+            get => _maxPixelsPerMeter;
+            set => _maxPixelsPerMeter = value > 0f ? value : throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        /// <summary>Clamps a zoom value to the current limits (MinPixelsPerMeter, or the whole-world level
+        /// while the OSM layer is on, up to MaxPixelsPerMeter).</summary>
+        private float ClampPixelsPerMeter(float pixelsPerMeter)
+        {
+            float min = _osmEnabled
+                ? Math.Min(_minPixelsPerMeter, (float)(256.0 / WebMercatorWorldSize)) // zoom level 0 = one 256 px tile for the whole world
+                : _minPixelsPerMeter;
+            return Math.Max(min, Math.Min(_maxPixelsPerMeter, pixelsPerMeter));
+        }
         public float YawDegrees => _yawDeg;
         public float PitchDegrees => _pitchDeg;
 
@@ -225,7 +250,7 @@ namespace SimpleDrawingEngine
 
         /// <summary>The current measurement's distance in meters, once both points are placed - null before that.</summary>
         public float? MeasuredDistance => (_measureStart != null && _measureEnd != null)
-            ? Vector3.Distance(_measureStart.Value, _measureEnd.Value)
+            ? MeasureWorldDistance(_measureStart.Value, _measureEnd.Value)
             : (float?)null;
 
         /// <summary>Fires once the measuring tool's second point is placed, with the measured distance (meters).</summary>
@@ -345,6 +370,8 @@ namespace SimpleDrawingEngine
             {
                 Application.RemoveMessageFilter(_wheelFilter);
                 _backgroundImage?.Dispose();
+                _osmEnabled = false;
+                ResetOsmState(); // cancel tile downloads in flight, free cached tiles
             };
 
             if (_pictureBox.IsHandleCreated)

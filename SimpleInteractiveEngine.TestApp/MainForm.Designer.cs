@@ -47,8 +47,11 @@
             imageList1 = new ImageList(components);
             statusStrip1 = new StatusStrip();
             toolStripButtonDarkMode = new ToolStripButton();
+            toolStripButtonOsm = new ToolStripButton();
+            toolStripStatusLabelCoords = new ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             toolStrip1.SuspendLayout();
+            statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // pictureBox1
@@ -64,7 +67,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom, toolStripButtonDarkMode });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom, toolStripButtonDarkMode, toolStripButtonOsm });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -189,6 +192,7 @@
             // 
             // statusStrip1
             // 
+            statusStrip1.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelCoords });
             statusStrip1.Location = new Point(0, 428);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new Size(800, 22);
@@ -205,6 +209,21 @@
             toolStripButtonDarkMode.Text = "toolStripButton1";
             toolStripButtonDarkMode.Click += toolStripButtonDarkMode_Click;
             // 
+            // toolStripButtonOsm
+            // 
+            toolStripButtonOsm.CheckOnClick = true;
+            toolStripButtonOsm.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButtonOsm.Name = "toolStripButtonOsm";
+            toolStripButtonOsm.Size = new Size(36, 36);
+            toolStripButtonOsm.Text = "OSM";
+            toolStripButtonOsm.ToolTipText = "OpenStreetMap podklad (zap/vyp)";
+            toolStripButtonOsm.Click += toolStripButtonOsm_Click;
+            // 
+            // toolStripStatusLabelCoords
+            // 
+            toolStripStatusLabelCoords.Name = "toolStripStatusLabelCoords";
+            toolStripStatusLabelCoords.Size = new Size(0, 17);
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -219,6 +238,8 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -242,5 +263,7 @@
         private ToolStripButton toolStripButtonLengthMeasure;
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripButton toolStripButtonDarkMode;
+        private ToolStripButton toolStripButtonOsm;
+        private ToolStripStatusLabel toolStripStatusLabelCoords;
     }
 }

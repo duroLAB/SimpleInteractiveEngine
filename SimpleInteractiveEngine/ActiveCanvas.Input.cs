@@ -226,7 +226,7 @@ namespace SimpleDrawingEngine
                 return;
             }
 
-            if (AllowFreeRotate && e.Button == MouseButtons.Left)
+            if (AllowFreeRotate && !IsNorthUpLocked && e.Button == MouseButtons.Left)
             {
                 float dx = e.X - _dragStart.X;
                 float dy = e.Y - _dragStart.Y;

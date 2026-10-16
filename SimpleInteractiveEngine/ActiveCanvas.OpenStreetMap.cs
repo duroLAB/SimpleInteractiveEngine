@@ -215,6 +215,54 @@ namespace SimpleDrawingEngine
         /// <summary>True while the tile layer is on (between EnableOpenStreetMap and DisableOpenStreetMap).</summary>
         public bool IsOpenStreetMapEnabled => _osmEnabled;
 
+        private bool _osmLockNorthUp = true;
+        private bool _osmHidesBackgroundImage = true;
+
+        /// <summary>
+        /// If true (default), the view is locked to the top view with north up while the tile layer is on:
+        /// EnableOpenStreetMap() switches to it (keeping the spot in the middle of the screen in place),
+        /// SetView()/ShowIsometricView()/... are forced back to it, and dragging doesn't rotate the scene
+        /// even with AllowFreeRotate = true. A map reads the way people expect it to, and tiles are made
+        /// for exactly this view. Set to false to allow rotated/tilted views over the map.
+        /// </summary>
+        public bool OsmLockNorthUp
+        {
+            get => _osmLockNorthUp;
+            set
+            {
+                if (value == _osmLockNorthUp) return;
+                _osmLockNorthUp = value;
+                if (IsNorthUpLocked)
+                {
+                    SetRotationKeepingCenter(0f, 90f);
+                    Render();
+                }
+            }
+        }
+
+        /// <summary>True while the view is actually locked north-up (the tile layer is on and OsmLockNorthUp
+        /// is true) - e.g. to disable "3D view"/rotation buttons in the host UI meanwhile.</summary>
+        public bool IsNorthUpLocked => _osmEnabled && _osmLockNorthUp;
+
+        /// <summary>
+        /// If true (default), the background image (SetBackgroundImage / GeoTIFF) is hidden while the tile
+        /// layer is on - it's only hidden, not removed, and shows again after DisableOpenStreetMap(). Set to
+        /// false to draw it on top of the tiles (e.g. a georeferenced orthophoto in Web Mercator over the map).
+        /// </summary>
+        public bool OsmHidesBackgroundImage
+        {
+            get => _osmHidesBackgroundImage;
+            set
+            {
+                if (value == _osmHidesBackgroundImage) return;
+                _osmHidesBackgroundImage = value;
+                Render();
+            }
+        }
+
+        /// <summary>True while the background image is hidden because of the tile layer.</summary>
+        private bool IsBackgroundImageHidden => _osmEnabled && _osmHidesBackgroundImage;
+
         /// <summary>Tile zoom level used by the last render (0..OsmMaxZoom), e.g. for a status bar.</summary>
         public int OsmCurrentZoom => _osmCurrentZoom;
 
@@ -265,6 +313,10 @@ namespace SimpleDrawingEngine
             _osmEnabled = true;
             _osmGeneration++;
             _osmCts = new CancellationTokenSource();
+
+            if (_osmLockNorthUp)
+                SetRotationKeepingCenter(0f, 90f);
+
             Render();
         }
 
@@ -275,6 +327,34 @@ namespace SimpleDrawingEngine
             _osmEnabled = false;
             ResetOsmState();
             Render();
+        }
+
+        /// <summary>
+        /// Changes the camera rotation so that the ground point currently in the middle of the screen stays
+        /// in the middle (a plain SetView() rotates around the world origin, which can throw the area you
+        /// were looking at far off-screen). Doesn't render - the caller does.
+        /// </summary>
+        private void SetRotationKeepingCenter(float yawDeg, float pitchDeg)
+        {
+            if (_buffer == null)
+            {
+                _yawDeg = yawDeg;
+                _pitchDeg = ClampPitch(pitchDeg);
+                return;
+            }
+
+            var center = new PointF(_buffer.Width / 2f, _buffer.Height / 2f);
+            bool hasGround = TryScreenToGround(center, out var groundPoint); // e.g. false in a pure front view
+
+            _yawDeg = yawDeg;
+            _pitchDeg = ClampPitch(pitchDeg);
+
+            if (!hasGround) return;
+
+            var (x, z) = ProjectRawXZ(groundPoint);
+            _panOffsetPixels = new PointF(
+                center.X - x * _pixelsPerMeter,
+                center.Y + z * _pixelsPerMeter);
         }
 
         /// <summary>Cancels downloads in flight and drops all in-memory tiles - used on disable, source

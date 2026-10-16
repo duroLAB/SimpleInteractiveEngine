@@ -100,7 +100,11 @@ namespace SimpleDrawingEngine
         #region Camera state, UI wiring and events
         // ---- Background bitmap (map/drawing), lying in the world plane at a given Z ----
         private Image? _backgroundImage;
-        private Vector3 _bgWorldOrigin;
+        // Stored as RAW coordinates and converted through the CURRENT local origin when used (see
+        // BackgroundLocalOrigin) - so a SetLocalOrigin() call made after loading the image (e.g. when the
+        // OSM layer gets turned on) can never push the image somewhere millions of meters away.
+        private Vector3 _bgRawOrigin;
+        private Vector3 BackgroundLocalOrigin => ToLocal(_bgRawOrigin);
         private float _bgWorldWidth;
         private float _bgWorldHeight;
 

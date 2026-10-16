@@ -32,7 +32,8 @@ namespace SimpleDrawingEngine
         /// axes for you - that part is CRS-specific and stays entirely in your own code.
         ///
         /// Call this once, before adding any content - changing it afterwards does not move what's
-        /// already on the canvas (their stored World values stay as they are).
+        /// already on the canvas (their stored World values stay as they are). The one exception is the
+        /// background image: it keeps its RAW position and always follows the current origin.
         /// </summary>
         public void SetLocalOrigin(float x, float y, float z = 0f) => _localOrigin = new Vector3(x, y, z);
 
@@ -332,7 +333,7 @@ namespace SimpleDrawingEngine
             _backgroundImage?.Dispose();
             _backgroundImage = image ?? throw new ArgumentNullException(nameof(image));
 
-            _bgWorldOrigin = ToLocal(new Vector3(worldX, worldY, worldZ));
+            _bgRawOrigin = new Vector3(worldX, worldY, worldZ); // raw on purpose - see BackgroundLocalOrigin
             _bgWorldWidth = worldWidthMeters;
             _bgWorldHeight = worldHeightMeters ?? worldWidthMeters * image.Height / image.Width;
 

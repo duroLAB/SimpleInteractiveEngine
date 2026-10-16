@@ -16,6 +16,7 @@ namespace SimpleInteractiveEngine.TestApp
         private const double DemoLatitude = 48.1437;
         private const double DemoLongitude = 17.1078;
         private bool _geoDemoAdded;
+        private Vector3 _originBeforeMap; // local origin to restore when the map is turned off
         public MainForm()
         {
             InitializeComponent();
@@ -159,6 +160,14 @@ namespace SimpleInteractiveEngine.TestApp
 
         private async void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
         {
+            // A background image is plain local meters / S-JTSK here, not Web Mercator - and it would be
+            // hidden under the map anyway (OsmHidesBackgroundImage) - so opening one switches the map off.
+            if (toolStripButtonOsm.Checked)
+            {
+                toolStripButtonOsm.Checked = false;
+                SetMapEnabled(false);
+            }
+
             // BackgroundImageOpener.Show(this, engine);
             await BackgroundImageOpener.ShowAsync(this, engine);
         }
@@ -175,10 +184,21 @@ namespace SimpleInteractiveEngine.TestApp
             engine.StartMeasuring();
         }
 
-        private void toolStripButtonOsm_Click(object sender, EventArgs e)
+        private void toolStripButtonOsm_Click(object sender, EventArgs e) => SetMapEnabled(toolStripButtonOsm.Checked);
+
+        /// <summary>
+        /// This test app mixes two worlds: plain local meters / S-JTSK (demo scene, background images) and
+        /// Web Mercator (the map). A real app would pick ONE coordinate system and call SetLocalOrigin once
+        /// at start-up; here the Web Mercator origin is set only while the map is on, and the previous one
+        /// is restored afterwards - otherwise anything loaded later would land millions of meters away.
+        /// </summary>
+        private void SetMapEnabled(bool enabled)
         {
-            if (toolStripButtonOsm.Checked)
+            if (enabled)
             {
+                _originBeforeMap = engine.ToRaw(Vector3.Zero); // = the current local origin
+                engine.SetLocalOriginLatLon(DemoLatitude, DemoLongitude);
+
                 if (!_geoDemoAdded)
                 {
                     AddGeoDemo();
@@ -186,12 +206,19 @@ namespace SimpleInteractiveEngine.TestApp
                 }
 
                 engine.OsmUserAgent = "ActiveCanvas.TestApp/1.0.1 (+https://github.com/duroLAB/SimpleInteractiveEngine)";
-                engine.EnableOpenStreetMap();
+                engine.EnableOpenStreetMap();   // switches to top view, north up (OsmLockNorthUp = true by default)
                 engine.ZoomToLatLon(DemoLatitude, DemoLongitude, zoomLevel: 16);
+
+                // The map keeps the view locked north-up, so 3D/rotation makes no sense meanwhile.
+                engine.AllowFreeRotate = false;
+                toolStripButton3D2Dview.Image = imageList1.Images[1];
+                toolStripButton3D2Dview.Enabled = !engine.IsNorthUpLocked;
             }
             else
             {
-                engine.DisableOpenStreetMap();
+                engine.DisableOpenStreetMap();   // the background image (if any) shows again
+                engine.SetLocalOrigin(_originBeforeMap.X, _originBeforeMap.Y, _originBeforeMap.Z);
+                toolStripButton3D2Dview.Enabled = true;
                 toolStripStatusLabelCoords.Text = "";
                 engine.ZoomToFullExtent();
             }
@@ -200,11 +227,8 @@ namespace SimpleInteractiveEngine.TestApp
         /// <summary>A few items placed by GPS coordinates, to check they sit on the right spot of the map.</summary>
         private void AddGeoDemo()
         {
-            // Local origin in the middle of the area of interest - keeps float coordinates precise.
-            // NOTE: in a real app call this BEFORE adding any content. Here the demo scene (built in local
-            // meters around 0,0) already exists, so it simply ends up sitting on Hlavne namestie.
-            engine.SetLocalOriginLatLon(DemoLatitude, DemoLongitude);
-
+            // Called while the Web Mercator origin is active (see SetMapEnabled). The demo scene, built in
+            // local meters around 0,0, simply ends up sitting on Hlavne namestie while the map is on.
             var castle = engine.CreatePointLatLon(48.14216, 17.10004, label: "Bratislavsky hrad")
                 .WithBrush(new SolidBrush(Color.Crimson)).WithShape(ActiveCanvas.PointShape.Star).WithSize(10f);
             var gate = engine.CreatePointLatLon(48.14513, 17.10668, label: "Michalska brana")

@@ -198,6 +198,10 @@ var geo = engine.ScreenToLatLon(mousePosition);   // (Latitude, Longitude)? - nu
 Tiles load in the background (max. 2 parallel requests), are cached in memory and on disk
 (`%LOCALAPPDATA%\ActiveCanvas\TileCache`, 7 days by default), and a cached lower-zoom tile is stretched
 in place while a tile is still loading. Another tile source: set `OsmTileUrlTemplate` and `OsmAttribution`.
+
+While the layer is on, the view is locked to the top view with north up (`OsmLockNorthUp`, check
+`IsNorthUpLocked` to disable rotation buttons in your UI), and the background image is hidden - not removed -
+until the layer is turned off again (`OsmHidesBackgroundImage`). Set either property to `false` to opt out.
 Please respect the [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/) - heavy
 use needs your own tile server or a commercial provider.
 

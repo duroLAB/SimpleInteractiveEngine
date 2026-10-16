@@ -30,6 +30,13 @@ namespace SimpleDrawingEngine
 
         public void SetView(float yawDeg, float pitchDeg)
         {
+            if (IsNorthUpLocked)
+            {
+                // Map mode (see OsmLockNorthUp) - top view, north up, whatever was asked for.
+                yawDeg = 0f;
+                pitchDeg = 90f;
+            }
+
             _yawDeg = yawDeg;
             _pitchDeg = ClampPitch(pitchDeg);
             Render();
@@ -774,12 +781,13 @@ namespace SimpleDrawingEngine
 
             // Include the background image's 4 corners too, if one is loaded - the current camera
             // rotation can make any of them the extreme point, not just the "top-left" one.
-            if (_backgroundImage != null)
+            if (_backgroundImage != null && !IsBackgroundImageHidden)
             {
-                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin));
-                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin + new Vector3(_bgWorldWidth, 0, 0)));
-                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin + new Vector3(0, -_bgWorldHeight, 0)));
-                rawPoints.Add(ProjectRawXZ(_bgWorldOrigin + new Vector3(_bgWorldWidth, -_bgWorldHeight, 0)));
+                var bgOrigin = BackgroundLocalOrigin;
+                rawPoints.Add(ProjectRawXZ(bgOrigin));
+                rawPoints.Add(ProjectRawXZ(bgOrigin + new Vector3(_bgWorldWidth, 0, 0)));
+                rawPoints.Add(ProjectRawXZ(bgOrigin + new Vector3(0, -_bgWorldHeight, 0)));
+                rawPoints.Add(ProjectRawXZ(bgOrigin + new Vector3(_bgWorldWidth, -_bgWorldHeight, 0)));
             }
 
             if (rawPoints.Count == 0) return; // nothing to fit to - leave the current view untouched

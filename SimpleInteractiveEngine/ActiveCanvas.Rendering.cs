@@ -109,7 +109,7 @@ namespace SimpleDrawingEngine
 
         private void DrawBackgroundImage(Graphics g)
         {
-            if (_backgroundImage == null) return;
+            if (_backgroundImage == null || IsBackgroundImageHidden) return; // hidden under the OSM layer, see OsmHidesBackgroundImage
 
             // In top view, screenY = -y*ppm holds, so increasing world Y goes UP on screen.
             // The image must therefore stretch from the top edge (worldOrigin) towards MINUS Y,
@@ -117,9 +117,10 @@ namespace SimpleDrawingEngine
             //
             // Orthographic projection preserves parallelism -> the background rectangle always projects
             // to exactly a parallelogram, so 3 corners are enough (DrawImage fills in the fourth).
-            var topLeft = Project(_bgWorldOrigin);
-            var topRight = Project(_bgWorldOrigin + new Vector3(_bgWorldWidth, 0, 0));
-            var bottomLeft = Project(_bgWorldOrigin + new Vector3(0, -_bgWorldHeight, 0));
+            var bgOrigin = BackgroundLocalOrigin;
+            var topLeft = Project(bgOrigin);
+            var topRight = Project(bgOrigin + new Vector3(_bgWorldWidth, 0, 0));
+            var bottomLeft = Project(bgOrigin + new Vector3(0, -_bgWorldHeight, 0));
 
             g.DrawImage(_backgroundImage, new[] { topLeft, topRight, bottomLeft });
         }

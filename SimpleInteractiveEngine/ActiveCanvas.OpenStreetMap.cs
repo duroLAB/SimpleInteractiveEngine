@@ -75,7 +75,8 @@ namespace SimpleDrawingEngine
         /// </summary>
         public void SetLocalOriginLatLon(double latitude, double longitude)
         {
-            var (x, y) = LatLonToWebMercator(latitude, longitude);
+            var (mx, my) = LatLonToWebMercator(latitude, longitude);
+            var (x, y) = MercatorToRaw(mx, my);
             SetLocalOrigin((float)Math.Round(x), (float)Math.Round(y), 0f);
         }
 
@@ -84,13 +85,17 @@ namespace SimpleDrawingEngine
         /// overloads of AddPoint for large Web Mercator values.</summary>
         public Vector3 LatLonToLocal(double latitude, double longitude, float z = 0f)
         {
-            var (x, y) = LatLonToWebMercator(latitude, longitude);
+            var (mx, my) = LatLonToWebMercator(latitude, longitude);
+            var (x, y) = MercatorToRaw(mx, my); // identity unless a geo anchor is set (SetGeoAnchor)
             return new Vector3((float)(x - _localOrigin.X), (float)(y - _localOrigin.Y), z - _localOrigin.Z);
         }
 
         /// <summary>The exact opposite of LatLonToLocal() - e.g. Point3D.World back to a GPS position.</summary>
         public (double Latitude, double Longitude) LocalToLatLon(Vector3 local)
-            => WebMercatorToLatLon(local.X + (double)_localOrigin.X, local.Y + (double)_localOrigin.Y);
+        {
+            var (mx, my) = RawToMercator(local.X + (double)_localOrigin.X, local.Y + (double)_localOrigin.Y);
+            return WebMercatorToLatLon(mx, my);
+        }
 
         /// <summary>
         /// Like CreatePoint(), but from a GPS position - creates a standalone Point3D in local space,
@@ -123,7 +128,7 @@ namespace SimpleDrawingEngine
         {
             if (_buffer == null) return;
 
-            _pixelsPerMeter = ClampPixelsPerMeter((float)(256.0 * Math.Pow(2.0, zoomLevel) / WebMercatorWorldSize));
+            _pixelsPerMeter = ClampPixelsPerMeter((float)(256.0 * Math.Pow(2.0, zoomLevel) * MercatorUnitsPerWorldUnit / WebMercatorWorldSize));
 
             var (x, z) = ProjectRawXZ(LatLonToLocal(latitude, longitude));
             _panOffsetPixels = new PointF(
@@ -154,6 +159,95 @@ namespace SimpleDrawingEngine
             local = a + direction * t;
             return true;
         }
+
+        #endregion
+
+        #region OpenStreetMap - geo anchor (a drawing in its own coordinates, placed on the map)
+
+        private bool _geoAnchorSet;
+        private double _anchorMercX, _anchorMercY;   // Web Mercator position of the anchor point
+        private double _anchorScale = 1.0;           // Web Mercator units per real meter at the anchor = 1/cos(latitude)
+        private double _anchorDrawX, _anchorDrawY;   // the anchor point in RAW drawing coordinates
+
+        /// <summary>
+        /// Places a drawing that lives in its own coordinates (e.g. from AutoCAD, in meters) onto the map:
+        /// the drawing point (drawingX, drawingY) - by default its origin - lies at the given GPS position,
+        /// and the drawing's "up" points at WorldUpBearingDegrees. From then on the world coordinates stay
+        /// the DRAWING's (nothing you've added moves, X/Y stay as they are, distances stay real meters), and
+        /// the OSM tiles are rotated/scaled into the drawing instead; with OsmLockNorthUp the view turns so
+        /// that north is up while the map is shown (the drawing then appears rotated) and turns back after.
+        ///
+        ///     engine.WorldUpBearingDegrees = 60f;                    // drawing "up" faces ENE
+        ///     engine.SetGeoAnchor(48.1437, 17.1078);                 // drawing 0,0 = this GPS position
+        ///     engine.EnableOpenStreetMap();
+        ///
+        /// Without a geo anchor, the world coordinates themselves are Web Mercator while the map is on (the
+        /// mode for data that already is in GPS/Web Mercator - see CreatePointLatLon). The anchor uses the
+        /// Web Mercator scale at the anchor point for the whole drawing - accurate to ~0.1 % within a few km.
+        /// </summary>
+        public void SetGeoAnchor(double latitude, double longitude, float drawingX = 0f, float drawingY = 0f)
+        {
+            var (mx, my) = LatLonToWebMercator(latitude, longitude);
+            _anchorMercX = mx;
+            _anchorMercY = my;
+            _anchorScale = 1.0 / Math.Cos(Math.Clamp(latitude, -WebMercatorMaxLatitude, WebMercatorMaxLatitude) * Math.PI / 180.0);
+            _anchorDrawX = drawingX;
+            _anchorDrawY = drawingY;
+            _geoAnchorSet = true;
+
+            if (IsNorthUpLocked) SetRotationKeepingCenter(NorthUpYaw, 90f);
+            Render();
+        }
+
+        /// <summary>Removes the geo anchor - the world coordinates are treated as Web Mercator again while
+        /// the map is on.</summary>
+        public void ClearGeoAnchor()
+        {
+            if (!_geoAnchorSet) return;
+            _geoAnchorSet = false;
+
+            if (IsNorthUpLocked) SetRotationKeepingCenter(NorthUpYaw, 90f);
+            Render();
+        }
+
+        /// <summary>True if SetGeoAnchor() has placed the drawing on the map.</summary>
+        public bool HasGeoAnchor => _geoAnchorSet;
+
+        /// <summary>RAW world (drawing) coordinates -> Web Mercator. Identity without a geo anchor.</summary>
+        private (double X, double Y) RawToMercator(double x, double y)
+        {
+            if (!_geoAnchorSet) return (x, y);
+
+            double b = _worldUpBearingDegrees * Math.PI / 180.0;
+            double cos = Math.Cos(b), sin = Math.Sin(b);
+            double dx = x - _anchorDrawX, dy = y - _anchorDrawY;
+
+            double east = dx * cos + dy * sin;      // same rotation as ToTrueNorth()
+            double north = -dx * sin + dy * cos;
+            return (_anchorMercX + east * _anchorScale, _anchorMercY + north * _anchorScale);
+        }
+
+        /// <summary>Web Mercator -> RAW world (drawing) coordinates. Identity without a geo anchor.</summary>
+        private (double X, double Y) MercatorToRaw(double mx, double my)
+        {
+            if (!_geoAnchorSet) return (mx, my);
+
+            double b = _worldUpBearingDegrees * Math.PI / 180.0;
+            double cos = Math.Cos(b), sin = Math.Sin(b);
+            double east = (mx - _anchorMercX) / _anchorScale;
+            double north = (my - _anchorMercY) / _anchorScale;
+
+            double x = east * cos - north * sin;     // same rotation as FromTrueNorth()
+            double y = east * sin + north * cos;
+            return (x + _anchorDrawX, y + _anchorDrawY);
+        }
+
+        /// <summary>How many Web Mercator units one world unit is: 1 without an anchor (the world IS Web
+        /// Mercator), 1/cos(latitude) with one (the world is real meters).</summary>
+        private double MercatorUnitsPerWorldUnit => _geoAnchorSet ? _anchorScale : 1.0;
+
+        /// <summary>The view yaw that puts true north straight up on screen (0 unless the drawing is rotated).</summary>
+        private float NorthUpYaw => -EffectiveWorldUpBearing;
 
         #endregion
 
@@ -234,7 +328,7 @@ namespace SimpleDrawingEngine
                 _osmLockNorthUp = value;
                 if (IsNorthUpLocked)
                 {
-                    SetRotationKeepingCenter(0f, 90f);
+                    SetRotationKeepingCenter(NorthUpYaw, 90f);
                     Render();
                 }
             }
@@ -302,10 +396,11 @@ namespace SimpleDrawingEngine
         #region OpenStreetMap - public on/off
 
         /// <summary>
-        /// Turns the tile layer on. From now on the engine treats its raw world coordinates as Web Mercator
-        /// meters: tiles are positioned accordingly, the scale bar and the measuring tool switch to real
-        /// ground distances (Web Mercator stretches distances by 1/cos(latitude) - about 1.5x in Central
-        /// Europe), and you can zoom out all the way to the whole world.
+        /// Turns the tile layer on. Without a geo anchor the engine treats its raw world coordinates as Web
+        /// Mercator meters: tiles are positioned accordingly, the scale bar and the measuring tool switch to
+        /// real ground distances (Web Mercator stretches distances by 1/cos(latitude) - about 1.5x in Central
+        /// Europe), and you can zoom out all the way to the whole world. With a geo anchor (SetGeoAnchor) the
+        /// world stays the drawing's own coordinates and the tiles are fitted into it instead.
         /// </summary>
         public void EnableOpenStreetMap()
         {
@@ -314,11 +409,14 @@ namespace SimpleDrawingEngine
             _osmGeneration++;
             _osmCts = new CancellationTokenSource();
 
+            _yawBeforeOsm = _yawDeg;
             if (_osmLockNorthUp)
-                SetRotationKeepingCenter(0f, 90f);
+                SetRotationKeepingCenter(NorthUpYaw, 90f);
 
             Render();
         }
+
+        private float _yawBeforeOsm;
 
         /// <summary>Turns the tile layer off and frees the tiles held in memory (the disk cache stays).</summary>
         public void DisableOpenStreetMap()
@@ -326,6 +424,11 @@ namespace SimpleDrawingEngine
             if (!_osmEnabled) return;
             _osmEnabled = false;
             ResetOsmState();
+
+            // Turn back to the orientation from before the map (e.g. the drawing's "up" on top again).
+            if (_osmLockNorthUp)
+                SetRotationKeepingCenter(_yawBeforeOsm, _pitchDeg);
+
             Render();
         }
 
@@ -391,7 +494,8 @@ namespace SimpleDrawingEngine
             }
 
             int maxZoom = Math.Clamp(OsmMaxZoom, 0, 24);
-            int z = Math.Clamp((int)Math.Round(Math.Log2(WebMercatorWorldSize * _pixelsPerMeter / 256.0)), 0, maxZoom);
+            double screenPixelsPerMercatorUnit = _pixelsPerMeter / MercatorUnitsPerWorldUnit;
+            int z = Math.Clamp((int)Math.Round(Math.Log2(WebMercatorWorldSize * screenPixelsPerMercatorUnit / 256.0)), 0, maxZoom);
 
             (int x0, int x1, int y0, int y1) range;
             while (true)
@@ -483,8 +587,11 @@ namespace SimpleDrawingEngine
 
         /// <summary>Raw Web Mercator (double) -> local space on the ground plane, subtracting the origin in
         /// double precision. Neighbouring tiles share corner values exactly, so no gaps appear between them.</summary>
-        private Vector3 MercatorToLocal(double x, double y)
-            => new Vector3((float)(x - _localOrigin.X), (float)(y - _localOrigin.Y), -_localOrigin.Z);
+        private Vector3 MercatorToLocal(double mx, double my)
+        {
+            var (x, y) = MercatorToRaw(mx, my); // with a geo anchor this rotates/scales the tile into the drawing
+            return new Vector3((float)(x - _localOrigin.X), (float)(y - _localOrigin.Y), -_localOrigin.Z);
+        }
 
         /// <summary>Bounding box (raw Web Mercator meters) of the ground area seen on screen.</summary>
         private bool TryGetVisibleMercatorRect(out double minX, out double minY, out double maxX, out double maxY)
@@ -501,8 +608,7 @@ namespace SimpleDrawingEngine
             foreach (var corner in corners)
             {
                 if (!TryScreenToGround(corner, out var local)) return false;
-                double x = local.X + (double)_localOrigin.X;
-                double y = local.Y + (double)_localOrigin.Y;
+                var (x, y) = RawToMercator(local.X + (double)_localOrigin.X, local.Y + (double)_localOrigin.Y);
                 minX = Math.Min(minX, x); maxX = Math.Max(maxX, x);
                 minY = Math.Min(minY, y); maxY = Math.Max(maxY, y);
             }
@@ -552,7 +658,7 @@ namespace SimpleDrawingEngine
         /// </summary>
         private float GroundMetersPerWorldUnit()
         {
-            if (!_osmEnabled || _buffer == null) return 1f;
+            if (!_osmEnabled || _geoAnchorSet || _buffer == null) return 1f; // with an anchor the world is real meters
             if (!TryScreenToGround(new PointF(_buffer.Width / 2f, _buffer.Height / 2f), out var center)) return 1f;
 
             double latitude = LocalToLatLon(center).Latitude;
@@ -563,7 +669,7 @@ namespace SimpleDrawingEngine
         /// layer is on, the great-circle distance on the ground (haversine) combined with the height difference.</summary>
         private float MeasureWorldDistance(Vector3 a, Vector3 b)
         {
-            if (!_osmEnabled) return Vector3.Distance(a, b);
+            if (!_osmEnabled || _geoAnchorSet) return Vector3.Distance(a, b);
 
             var (lat1, lon1) = LocalToLatLon(a);
             var (lat2, lon2) = LocalToLatLon(b);

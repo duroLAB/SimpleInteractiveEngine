@@ -102,6 +102,7 @@ namespace SimpleDrawingEngine
                 DrawMeasurement(g);
                 DrawScaleBar(g, _buffer.Width, _buffer.Height);
                 DrawOsmAttribution(g);
+                DrawNorthArrow(g);
             }
 
             _pictureBox.Invalidate();

@@ -16,7 +16,6 @@ namespace SimpleInteractiveEngine.TestApp
         private const double DemoLatitude = 48.1437;
         private const double DemoLongitude = 17.1078;
         private bool _geoDemoAdded;
-        private Vector3 _originBeforeMap; // local origin to restore when the map is turned off
         public MainForm()
         {
             InitializeComponent();
@@ -174,9 +173,9 @@ namespace SimpleInteractiveEngine.TestApp
 
         private void toolStripButtonClearAll_Click(object sender, EventArgs e)
         {
-            engine.ShowBusyOverlay("Clearing all items...");
-            /* engine.Clear();
-             engine.SetLocalOrigin(0, 0);*/
+            
+             engine.Clear();
+             engine.SetLocalOrigin(0, 0);
         }
 
         private void toolStripButtonLengthMeasure_Click(object sender, EventArgs e)
@@ -187,17 +186,16 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButtonOsm_Click(object sender, EventArgs e) => SetMapEnabled(toolStripButtonOsm.Checked);
 
         /// <summary>
-        /// This test app mixes two worlds: plain local meters / S-JTSK (demo scene, background images) and
-        /// Web Mercator (the map). A real app would pick ONE coordinate system and call SetLocalOrigin once
-        /// at start-up; here the Web Mercator origin is set only while the map is on, and the previous one
-        /// is restored afterwards - otherwise anything loaded later would land millions of meters away.
+        /// Everything in this test app is drawn in local "drawing" meters (like a CAD drawing). The geo
+        /// anchor places that drawing on the map: drawing 0,0 = Hlavne namestie, rotated by the bearing
+        /// set with the N° button. The world coordinates never change - the map is fitted under them.
         /// </summary>
         private void SetMapEnabled(bool enabled)
         {
             if (enabled)
             {
-                _originBeforeMap = engine.ToRaw(Vector3.Zero); // = the current local origin
-                engine.SetLocalOriginLatLon(DemoLatitude, DemoLongitude);
+                if (!engine.HasGeoAnchor)
+                    engine.SetGeoAnchor(DemoLatitude, DemoLongitude); // drawing origin (0,0) lies here
 
                 if (!_geoDemoAdded)
                 {
@@ -216,8 +214,7 @@ namespace SimpleInteractiveEngine.TestApp
             }
             else
             {
-                engine.DisableOpenStreetMap();   // the background image (if any) shows again
-                engine.SetLocalOrigin(_originBeforeMap.X, _originBeforeMap.Y, _originBeforeMap.Z);
+                engine.DisableOpenStreetMap();   // the background image (if any) shows again, the view turns back
                 toolStripButton3D2Dview.Enabled = true;
                 toolStripStatusLabelCoords.Text = "";
                 engine.ZoomToFullExtent();
@@ -227,14 +224,54 @@ namespace SimpleInteractiveEngine.TestApp
         /// <summary>A few items placed by GPS coordinates, to check they sit on the right spot of the map.</summary>
         private void AddGeoDemo()
         {
-            // Called while the Web Mercator origin is active (see SetMapEnabled). The demo scene, built in
-            // local meters around 0,0, simply ends up sitting on Hlavne namestie while the map is on.
+            // Converted to drawing coordinates through the geo anchor (and the bearing valid right now) -
+            // they stay where they are in the drawing if the bearing is changed later.
             var castle = engine.CreatePointLatLon(48.14216, 17.10004, label: "Bratislavsky hrad")
                 .WithBrush(new SolidBrush(Color.Crimson)).WithShape(ActiveCanvas.PointShape.Star).WithSize(10f);
             var gate = engine.CreatePointLatLon(48.14513, 17.10668, label: "Michalska brana")
                 .WithBrush(new SolidBrush(Color.Crimson)).WithShape(ActiveCanvas.PointShape.Star).WithSize(10f);
 
             engine.AddPolyline(new[] { castle, gate }, "Hrad - Michalska brana", new Pen(Color.Crimson, 2.5f));
+        }
+
+        /// <summary>Asks where the drawing's "up" really points (e.g. an AutoCAD background in local
+        /// coordinates) - the engine then shows a north arrow in the 2D view.</summary>
+        private void toolStripButtonNorth_Click(object sender, EventArgs e)
+        {
+            using var dlg = new Form
+            {
+                Text = "Orientácia výkresu",
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                StartPosition = FormStartPosition.CenterParent,
+                MinimizeBox = false,
+                MaximizeBox = false,
+                ClientSize = new Size(340, 120)
+            };
+
+            var label = new Label
+            {
+                Text = "Kam reálne smeruje vrch výkresu (azimut v stupňoch):0 = sever, 90 = východ, 135 = juhovýchod, 270 = západ",
+                Location = new Point(12, 12),
+                AutoSize = true
+            };
+            var input = new NumericUpDown
+            {
+                Location = new Point(12, 60),
+                Width = 100,
+                Minimum = -360,
+                Maximum = 360,
+                DecimalPlaces = 1,
+                Value = (decimal)(engine.WorldUpBearingDegrees % 360f)
+            };
+            var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(174, 59), Size = new Size(75, 25) };
+            var cancel = new Button { Text = "Zrušiť", DialogResult = DialogResult.Cancel, Location = new Point(253, 59), Size = new Size(75, 25) };
+
+            dlg.Controls.AddRange(new Control[] { label, input, ok, cancel });
+            dlg.AcceptButton = ok;
+            dlg.CancelButton = cancel;
+
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+                engine.WorldUpBearingDegrees = (float)input.Value;
         }
 
         private void toolStripButtonDarkMode_Click(object sender, EventArgs e)

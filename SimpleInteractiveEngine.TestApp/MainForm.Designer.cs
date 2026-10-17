@@ -48,6 +48,7 @@
             statusStrip1 = new StatusStrip();
             toolStripButtonDarkMode = new ToolStripButton();
             toolStripButtonOsm = new ToolStripButton();
+            toolStripButtonNorth = new ToolStripButton();
             toolStripStatusLabelCoords = new ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             toolStrip1.SuspendLayout();
@@ -67,7 +68,7 @@
             // 
             toolStrip1.AutoSize = false;
             toolStrip1.ImageScalingSize = new Size(32, 32);
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom, toolStripButtonDarkMode, toolStripButtonOsm });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonAddPoint, toolStripButtonAddPolyLine, toolStripButtonAddPolygon, toolStripButtonAddIcon, toolStripButtonOpenBackGroundImage, toolStripButtonClearAll, toolStripSeparator1, toolStripButtonLengthMeasure, toolStripSeparator3, toolStripButton3D2Dview, toolStripSeparator2, toolStripButtonFullZoom, toolStripButtonDarkMode, toolStripButtonOsm, toolStripButtonNorth });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 39);
@@ -219,6 +220,15 @@
             toolStripButtonOsm.ToolTipText = "OpenStreetMap podklad (zap/vyp)";
             toolStripButtonOsm.Click += toolStripButtonOsm_Click;
             // 
+            // toolStripButtonNorth
+            // 
+            toolStripButtonNorth.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            toolStripButtonNorth.Name = "toolStripButtonNorth";
+            toolStripButtonNorth.Size = new Size(36, 36);
+            toolStripButtonNorth.Text = "N°";
+            toolStripButtonNorth.ToolTipText = "Orientácia výkresu voči severu";
+            toolStripButtonNorth.Click += toolStripButtonNorth_Click;
+            // 
             // toolStripStatusLabelCoords
             // 
             toolStripStatusLabelCoords.Name = "toolStripStatusLabelCoords";
@@ -264,6 +274,7 @@
         private ToolStripSeparator toolStripSeparator3;
         private ToolStripButton toolStripButtonDarkMode;
         private ToolStripButton toolStripButtonOsm;
+        private ToolStripButton toolStripButtonNorth;
         private ToolStripStatusLabel toolStripStatusLabelCoords;
     }
 }

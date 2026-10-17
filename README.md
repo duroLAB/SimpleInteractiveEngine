@@ -49,6 +49,10 @@ hit-testing — done properly once, instead of rebuilt from scratch for every ne
   parsed DXF drawing)
 - An optional OpenStreetMap tile layer (or any other XYZ tile source) with GPS (WGS84) helpers -
   background download, memory + disk cache, real ground distances in the scale bar and measuring tool
+- A north arrow in 2D views (always shown by default; `NorthArrow = WhenRotated` shows it only when "up" isn't north), useful for views whose "up" isn't north - e.g. an AutoCAD drawing in local coordinates that in
+  reality faces south-east (`WorldUpBearingDegrees = 135`); it also follows a rotated 2D view (`NorthArrow`).
+  `ToTrueNorth()` / `FromTrueNorth()` convert drawing coordinates to north-aligned East/North ones, and the
+  property grid shows them next to X/Y
 
 **UI integration**
 - `CreatePropertyGrid()` — a ready-made `PropertyGrid` bound to the selected item; double-click → a
@@ -195,6 +199,17 @@ engine.AddPolyline(new[] { castle, gate }, "Route");
 var geo = engine.ScreenToLatLon(mousePosition);   // (Latitude, Longitude)? - null in a front/side view
 ```
 
+**A drawing in its own coordinates on the map** (e.g. from AutoCAD, in meters, rotated against north):
+
+```csharp
+engine.WorldUpBearingDegrees = 60f;           // the drawing's "up" really faces 60 deg (ENE)
+engine.SetGeoAnchor(48.1437, 17.1078);        // drawing 0,0 lies at this GPS position
+engine.EnableOpenStreetMap();                 // the map is fitted under the drawing, view turns north-up
+```
+
+The world coordinates stay the drawing's own (nothing moves, distances stay real meters); only the tiles
+are rotated and scaled into the drawing. `SetGeoAnchor(lat, lon, drawingX, drawingY)` anchors any drawing point.
+
 Tiles load in the background (max. 2 parallel requests), are cached in memory and on disk
 (`%LOCALAPPDATA%\ActiveCanvas\TileCache`, 7 days by default), and a cached lower-zoom tile is stretched
 in place while a tile is still loading. Another tile source: set `OsmTileUrlTemplate` and `OsmAttribution`.
@@ -241,6 +256,7 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `ActiveCanvas.PropertyGrid.cs` | `PropertyGrid` integration |
 | `ActiveCanvas.GeoTiff.cs` | Georeferencing from a world file / GeoTIFF tags |
 | `ActiveCanvas.OpenStreetMap.cs` | OSM/XYZ tile layer, Web Mercator and GPS helpers, tile cache |
+| `ActiveCanvas.NorthArrow.cs` | North arrow for rotated drawings / rotated 2D views |
 | `ActiveCanvas.BusyOverlay.cs` | "Please wait" overlay for slower operations |
 | `ActiveCanvas.Cursors.cs` | Custom cursor for drawing/placement |
 

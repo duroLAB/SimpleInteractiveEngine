@@ -164,7 +164,7 @@ namespace SimpleDrawingEngine
         private float ClampPixelsPerMeter(float pixelsPerMeter)
         {
             float min = _osmEnabled
-                ? Math.Min(_minPixelsPerMeter, (float)(256.0 / WebMercatorWorldSize)) // zoom level 0 = one 256 px tile for the whole world
+                ? Math.Min(_minPixelsPerMeter, (float)(256.0 * MercatorUnitsPerWorldUnit / WebMercatorWorldSize)) // zoom level 0 = one 256 px tile for the whole world
                 : _minPixelsPerMeter;
             return Math.Max(min, Math.Min(_maxPixelsPerMeter, pixelsPerMeter));
         }

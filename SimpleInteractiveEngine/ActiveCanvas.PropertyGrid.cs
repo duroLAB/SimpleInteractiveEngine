@@ -52,7 +52,14 @@ namespace SimpleDrawingEngine
 
             if (viewModel == null) return null;
 
-            var hiddenSet = hiddenProperties?.ToArray();
+            var hiddenList = hiddenProperties?.ToList() ?? new List<string>();
+            if (!HasTrueNorthRotation)
+            {
+                // East/North only mean something for a drawing rotated against north (WorldUpBearingDegrees).
+                hiddenList.Add("East");
+                hiddenList.Add("North");
+            }
+            var hiddenSet = hiddenList.ToArray();
             object gridSource = (hiddenSet != null && hiddenSet.Length > 0)
                 ? new FilteredPropertyView(viewModel, hiddenSet)
                 : viewModel;
@@ -135,6 +142,22 @@ namespace SimpleDrawingEngine
         [Category("Position")]
         [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
         public float Z { get => _engine.ToRaw(_point.World).Z; set => Move(X, Y, value); }
+
+        [Category("Position (true north)")]
+        [Description("Position rotated to true north (see ActiveCanvas.WorldUpBearingDegrees, ToTrueNorth) - X/Y above stay in the drawing's own coordinates. Editing moves the item.")]
+        public float East
+        {
+            get => _engine.ToTrueNorth(new Vector3(X, Y, Z)).X;
+            set { var d = _engine.FromTrueNorth(new Vector3(value, North, Z)); Move(d.X, d.Y, Z); }
+        }
+
+        [Category("Position (true north)")]
+        [Description("Position rotated to true north (see ActiveCanvas.WorldUpBearingDegrees, ToTrueNorth) - X/Y above stay in the drawing's own coordinates. Editing moves the item.")]
+        public float North
+        {
+            get => _engine.ToTrueNorth(new Vector3(X, Y, Z)).Y;
+            set { var d = _engine.FromTrueNorth(new Vector3(East, value, Z)); Move(d.X, d.Y, Z); }
+        }
 
         [Category("Appearance")]
         public string Label { get => _point.Label; set { _point.WithLabel(value); _engine.Render(); } }
@@ -293,6 +316,22 @@ namespace SimpleDrawingEngine
         [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
         public float Z { get => _engine.ToRaw(_marker.World).Z; set => Move(X, Y, value); }
 
+        [Category("Position (true north)")]
+        [Description("Position rotated to true north (see ActiveCanvas.WorldUpBearingDegrees, ToTrueNorth) - X/Y above stay in the drawing's own coordinates. Editing moves the item.")]
+        public float East
+        {
+            get => _engine.ToTrueNorth(new Vector3(X, Y, Z)).X;
+            set { var d = _engine.FromTrueNorth(new Vector3(value, North, Z)); Move(d.X, d.Y, Z); }
+        }
+
+        [Category("Position (true north)")]
+        [Description("Position rotated to true north (see ActiveCanvas.WorldUpBearingDegrees, ToTrueNorth) - X/Y above stay in the drawing's own coordinates. Editing moves the item.")]
+        public float North
+        {
+            get => _engine.ToTrueNorth(new Vector3(X, Y, Z)).Y;
+            set { var d = _engine.FromTrueNorth(new Vector3(East, value, Z)); Move(d.X, d.Y, Z); }
+        }
+
         [Category("Appearance")]
         public string Label { get => _marker.Label; set { _marker.WithLabel(value); _engine.Render(); } }
 
@@ -346,6 +385,22 @@ namespace SimpleDrawingEngine
         [Category("Position")]
         [Description("Raw (real-world CRS) coordinate - the engine's local offset, if any (SetLocalOrigin), is handled transparently here.")]
         public float Z { get => _engine.ToRaw(_shape.World).Z; set => Move(X, Y, value); }
+
+        [Category("Position (true north)")]
+        [Description("Position rotated to true north (see ActiveCanvas.WorldUpBearingDegrees, ToTrueNorth) - X/Y above stay in the drawing's own coordinates. Editing moves the item.")]
+        public float East
+        {
+            get => _engine.ToTrueNorth(new Vector3(X, Y, Z)).X;
+            set { var d = _engine.FromTrueNorth(new Vector3(value, North, Z)); Move(d.X, d.Y, Z); }
+        }
+
+        [Category("Position (true north)")]
+        [Description("Position rotated to true north (see ActiveCanvas.WorldUpBearingDegrees, ToTrueNorth) - X/Y above stay in the drawing's own coordinates. Editing moves the item.")]
+        public float North
+        {
+            get => _engine.ToTrueNorth(new Vector3(X, Y, Z)).Y;
+            set { var d = _engine.FromTrueNorth(new Vector3(East, value, Z)); Move(d.X, d.Y, Z); }
+        }
 
         [Category("Appearance")]
         public string Label { get => _shape.Label; set { _shape.WithLabel(value); _engine.Render(); } }

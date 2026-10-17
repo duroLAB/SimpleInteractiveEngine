@@ -33,7 +33,7 @@ namespace SimpleDrawingEngine
             if (IsNorthUpLocked)
             {
                 // Map mode (see OsmLockNorthUp) - top view, north up, whatever was asked for.
-                yawDeg = 0f;
+                yawDeg = NorthUpYaw;
                 pitchDeg = 90f;
             }
 

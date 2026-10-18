@@ -1,8 +1,10 @@
 # ActiveCanvas
 
-**A simple, interactive drawing engine for WinForms (.NET 8)** — built for situations where you need to
+**A simple, interactive drawing engine for WinForms (.NET 9)** — built for situations where you need to
 draw and interactively edit elements on a canvas: from simple technical sketches, through GIS/map
 backgrounds, to interactive diagrams and graphs with connected nodes.
+
+**Current version: 1.0.1** — see the [Changelog](#changelog).
 
 It's not a CAD or GIS library — it's a small, readable engine (a single `ActiveCanvas` class, split across
 several files by responsibility via `partial class`) that handles the stuff you end up needing again and
@@ -49,36 +51,40 @@ hit-testing — done properly once, instead of rebuilt from scratch for every ne
   parsed DXF drawing)
 - An optional OpenStreetMap tile layer (or any other XYZ tile source) with GPS (WGS84) helpers -
   background download, memory + disk cache, real ground distances in the scale bar and measuring tool
-- A north arrow in 2D views (always shown by default; `NorthArrow = WhenRotated` shows it only when "up" isn't north), useful for views whose "up" isn't north - e.g. an AutoCAD drawing in local coordinates that in
-  reality faces south-east (`WorldUpBearingDegrees = 135`); it also follows a rotated 2D view (`NorthArrow`).
-  `ToTrueNorth()` / `FromTrueNorth()` convert drawing coordinates to north-aligned East/North ones, and the
-  property grid shows them next to X/Y
+- `SetGeoAnchor()` — places a drawing in its own coordinates (e.g. from AutoCAD) on the map at a GPS
+  position; the map is fitted under the drawing, the drawing's coordinates never change
+- A north arrow in 2D views, and `WorldUpBearingDegrees` for drawings whose "up" isn't north (e.g. a
+  building that in reality faces south-east); `ToTrueNorth()` / `FromTrueNorth()` convert drawing
+  coordinates to north-aligned East/North ones, and the property grid shows them next to X/Y
 
 **UI integration**
 - `CreatePropertyGrid()` — a ready-made `PropertyGrid` bound to the selected item; double-click → a
   properties dialog
 - A consistent GUID `Id` on every item, for linking with the host application's own data
 - `FindById()`, events for selection/clicks/moves — no need to touch the `PictureBox` directly
+- Dark/light theme for the canvas (`ApplyDarkTheme()` / `ApplyLightTheme()`) and for the whole host form
+  (`AppTheme`), plus hatch/dot pattern fills for areas and shapes (`HatchBrushes`)
 
 ## Requirements
 
-- .NET 8.0-windows
+- .NET 9.0-windows (`net9.0-windows`)
 - WinForms (`<UseWindowsForms>true</UseWindowsForms>` in your `.csproj`)
 - No external NuGet dependencies
+- Internet access only for the optional OpenStreetMap layer
 
 ## Installation
 
 **Same solution** — add a project reference:
 
 ```
-Solution Explorer → your project → Add → Project Reference... → check ActiveCanvas
+Solution Explorer → your project → Add → Project Reference... → check SimpleInteractiveEngine.Core
 ```
 
 **As a standalone DLL** (a different solution) — build it (`dotnet build -c Release`), copy the `.dll`
 (plus the `.pdb` for debug symbols) into your project, and reference it via **Add → Project Reference... →
 Browse**.
 
-> The target project must also be WinForms (`net8.0-windows`, `UseWindowsForms=true`) — the engine uses
+> The target project must also be WinForms (`net9.0-windows`, `UseWindowsForms=true`) — the engine uses
 > `System.Drawing`/`System.Windows.Forms`.
 
 ## Quick start
@@ -259,6 +265,39 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `ActiveCanvas.NorthArrow.cs` | North arrow for rotated drawings / rotated 2D views |
 | `ActiveCanvas.BusyOverlay.cs` | "Please wait" overlay for slower operations |
 | `ActiveCanvas.Cursors.cs` | Custom cursor for drawing/placement |
+| `ActiveCanvas.Theme.cs` | Dark/light canvas theme |
+| `AppTheme.cs` | Dark/light theme for a whole host form |
+| `HatchBrushes.cs` | Hatch/dot pattern brushes |
+| `BackgroundImageOpener.cs` | Ready-made "open background image" dialog for a host app |
+
+## Changelog
+
+### 1.0.1
+
+**OpenStreetMap / map backgrounds**
+- Optional OSM (or any XYZ) tile layer: `EnableOpenStreetMap()` / `DisableOpenStreetMap()`, background
+  download (max. 2 parallel requests), memory + disk cache, lower-zoom stand-in tiles while loading,
+  attribution, configurable tile source (`OsmTileUrlTemplate`, `OsmAttribution`, `OsmUserAgent`, ...)
+- GPS helpers: `LatLonToWebMercator()`, `WebMercatorToLatLon()`, `SetLocalOriginLatLon()`,
+  `LatLonToLocal()`, `LocalToLatLon()`, `CreatePointLatLon()`, `ScreenToLatLon()`, `ZoomToLatLon()`
+- `SetGeoAnchor()` — a drawing in its own coordinates placed on the map
+- While the map is shown the view is locked north-up (`OsmLockNorthUp`, `IsNorthUpLocked`) and the
+  background image is hidden (`OsmHidesBackgroundImage`)
+- Scale bar and measuring tool show real ground distances on a Web Mercator map
+- Zoom limits are public (`MinPixelsPerMeter`, `MaxPixelsPerMeter`); with the map on you can zoom out to
+  the whole world
+
+**Orientation**
+- North arrow in 2D views (`NorthArrow`: `Always` / `WhenRotated` / `Never`)
+- `WorldUpBearingDegrees`, `ToTrueNorth()` / `FromTrueNorth()`, East/North in the property grid
+
+**Other**
+- Dark/light theme (`ApplyDarkTheme()`, `ApplyLightTheme()`, `AppTheme`) and `HatchBrushes`
+- Fix: the background image keeps its position when `SetLocalOrigin()` is called after loading it
+
+### 1.0.0
+
+- First public release
 
 ## License
 

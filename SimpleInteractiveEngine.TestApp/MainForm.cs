@@ -65,7 +65,8 @@ namespace SimpleInteractiveEngine.TestApp
             engine.ImageDoubleClicked += (s, im) => ShowPropertyDialog(im);
 
 
-            // engine.PointPlaced += (s, p) => { engine.ShowBusyOverlay("Saving point...");p.WithBrush(b) };
+            engine.PointPlaced += (s, p) => { MessageBox.Show("Point placed! x:"+ p.World.X);};
+            engine.PolygonDrawingFinished += (s, pg) => { MessageBox.Show("Polygon finished!"); };
 
 
             engine.CustomBackgroundPaint += (s, e) =>
@@ -154,7 +155,7 @@ namespace SimpleInteractiveEngine.TestApp
         {
             engine.ZoomToFullExtent();           // 10% okraj (default)
                                                  //   engine.ZoomToFullExtent(0f);         // presne na okraj, bez rezervy
-            engine.ApplyDarkTheme();                                     //   engine.ZoomToFullExtent(0.25f);      // väčší okraj
+           
         }
 
         private async void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)

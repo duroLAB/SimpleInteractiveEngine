@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Windows.Forms;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     public partial class ActiveCanvas
     {
@@ -313,12 +313,13 @@ namespace SimpleDrawingEngine
         }
 
         /// <summary>
-        /// Sets a background bitmap (e.g. a map or drawing) that lies in the world plane at a given
-        /// height Z, stretching from a given corner by worldWidthMeters x worldHeightMeters. It pans and
+        /// Sets the GROUND (plan view, X-Y plane) background bitmap (e.g. a map or drawing) that lies in the
+        /// world plane at a given height Z, stretching from a given corner by worldWidthMeters x worldHeightMeters. It pans and
         /// rotates together with the rest of the scene, since it's drawn through the same projection as everything else.
         /// worldX/worldY are RAW coordinates - if SetLocalOrigin() was called, the offset is applied automatically
         /// (this is also what makes SetBackgroundImageFromGeoTiff's positioning line up with points added via
         /// AddPoint/AddPolyline/etc. once a local origin is in use).
+        /// For elevations see SetFrontBackgroundImage / SetSideBackgroundImage (ActiveCanvas.Backgrounds.cs).
         /// </summary>
         /// <param name="image">The background image. The engine takes ownership and disposes it itself on replacement/close.</param>
         /// <param name="worldX">Raw X coordinate of the image's top-left corner (meters).</param>
@@ -330,22 +331,20 @@ namespace SimpleDrawingEngine
         public void SetBackgroundImage(Image image, float worldX, float worldY, float worldWidthMeters,
             float? worldHeightMeters = null, float worldZ = 0f)
         {
-            _backgroundImage?.Dispose();
-            _backgroundImage = image ?? throw new ArgumentNullException(nameof(image));
+            if (image == null) throw new ArgumentNullException(nameof(image));
 
-            _bgRawOrigin = new Vector3(worldX, worldY, worldZ); // raw on purpose - see BackgroundLocalOrigin
-            _bgWorldWidth = worldWidthMeters;
-            _bgWorldHeight = worldHeightMeters ?? worldWidthMeters * image.Height / image.Width;
-
-            Render();
+            // In top view, increasing world Y goes UP on screen, so the image stretches from its top edge
+            // towards MINUS Y (otherwise it would be vertically flipped). The corner is stored RAW, so a
+            // SetLocalOrigin() call made later can never push the image millions of meters away.
+            SetBackgroundSlot(BackgroundPlane.Ground, image,
+                rawTopLeft: new Vector3(worldX, worldY, worldZ),
+                right: Vector3.UnitX, down: -Vector3.UnitY,
+                worldWidthMeters, worldHeightMeters ?? AspectHeight(image, worldWidthMeters));
         }
 
-        public void ClearBackgroundImage()
-        {
-            _backgroundImage?.Dispose();
-            _backgroundImage = null;
-            Render();
-        }
+        /// <summary>Removes the GROUND (plan view) background image - see ClearBackgroundImage(BackgroundPlane)
+        /// for the front/side ones.</summary>
+        public void ClearBackgroundImage() => ClearBackgroundImage(BackgroundPlane.Ground);
 
         #endregion
     }

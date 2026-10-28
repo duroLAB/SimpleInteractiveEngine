@@ -4,7 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     public partial class ActiveCanvas
     {

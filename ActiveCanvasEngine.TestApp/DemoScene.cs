@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine.TestApp
 {
     /// <summary>
     /// A demonstration of creating every primitive the engine supports. Call it e.g. from Form_Load:

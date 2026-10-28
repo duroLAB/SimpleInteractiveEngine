@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Windows.Forms;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     public partial class ActiveCanvas
     {
@@ -779,16 +779,9 @@ namespace SimpleDrawingEngine
             foreach (var im in Images) rawPoints.Add(ProjectRawXZ(im.World));
             foreach (var sh in Shapes) rawPoints.Add(ProjectRawXZ(sh.World));
 
-            // Include the background image's 4 corners too, if one is loaded - the current camera
-            // rotation can make any of them the extreme point, not just the "top-left" one.
-            if (_backgroundImage != null && !IsBackgroundImageHidden)
-            {
-                var bgOrigin = BackgroundLocalOrigin;
-                rawPoints.Add(ProjectRawXZ(bgOrigin));
-                rawPoints.Add(ProjectRawXZ(bgOrigin + new Vector3(_bgWorldWidth, 0, 0)));
-                rawPoints.Add(ProjectRawXZ(bgOrigin + new Vector3(0, -_bgWorldHeight, 0)));
-                rawPoints.Add(ProjectRawXZ(bgOrigin + new Vector3(_bgWorldWidth, -_bgWorldHeight, 0)));
-            }
+            // Include the 4 corners of every visible background image (plan/front/side) too - the current
+            // camera rotation can make any of them the extreme point, not just the "top-left" one.
+            AddBackgroundExtentPoints(rawPoints);
 
             if (rawPoints.Count == 0) return; // nothing to fit to - leave the current view untouched
 

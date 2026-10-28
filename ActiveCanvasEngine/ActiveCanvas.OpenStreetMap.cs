@@ -12,7 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     public partial class ActiveCanvas
     {
@@ -339,8 +339,8 @@ namespace SimpleDrawingEngine
         public bool IsNorthUpLocked => _osmEnabled && _osmLockNorthUp;
 
         /// <summary>
-        /// If true (default), the background image (SetBackgroundImage / GeoTIFF) is hidden while the tile
-        /// layer is on - it's only hidden, not removed, and shows again after DisableOpenStreetMap(). Set to
+        /// If true (default), the ground background image (SetBackgroundImage / GeoTIFF) is hidden while the
+        /// tile layer is on (the front/side images aren't affected - in the map's top view they're edge-on anyway) - it's only hidden, not removed, and shows again after DisableOpenStreetMap(). Set to
         /// false to draw it on top of the tiles (e.g. a georeferenced orthophoto in Web Mercator over the map).
         /// </summary>
         public bool OsmHidesBackgroundImage

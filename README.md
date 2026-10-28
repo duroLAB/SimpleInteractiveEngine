@@ -45,6 +45,8 @@ hit-testing — done properly once, instead of rebuilt from scratch for every ne
 **Backgrounds and data**
 - A raster background image with automatic georeferencing from GeoTIFF (world files like `.tfw`, as well
   as embedded GeoTIFF tags), loaded asynchronously with a "please wait" overlay for large files
+- Elevation backgrounds: one image each for the front (X-Z) and side (Y-Z) plane, next to the plan view -
+  they stand in the 3D view like walls and can be hidden or made semi-transparent
 - `SetLocalOrigin()` — a coordinate offset for precision when working with large real-world coordinates
   (S-JTSK, UTM, ...)
 - A custom render hook (`CustomBackgroundPaint`) for drawing any custom background yourself (e.g. a
@@ -77,10 +79,11 @@ hit-testing — done properly once, instead of rebuilt from scratch for every ne
 **Same solution** — add a project reference:
 
 ```
-Solution Explorer → your project → Add → Project Reference... → check SimpleInteractiveEngine.Core
+Solution Explorer → your project → Add → Project Reference... → check ActiveCanvasEngine
 ```
 
-**As a standalone DLL** (a different solution) — build it (`dotnet build -c Release`), copy the `.dll`
+**As a standalone DLL** (a different solution) — build it (`dotnet build -c Release`), copy
+`ActiveCanvasEngine.dll`
 (plus the `.pdb` for debug symbols) into your project, and reference it via **Add → Project Reference... →
 Browse**.
 
@@ -90,7 +93,7 @@ Browse**.
 ## Quick start
 
 ```csharp
-using SimpleDrawingEngine;
+using ActiveCanvasEngine;
 
 var engine = new ActiveCanvas(pictureBox1);   // default = top view, pure 2D
 engine.AddPoint(5, 3, 0, "Point A");
@@ -187,6 +190,24 @@ engine.ZoomToFullExtent();
 engine.SetBackgroundImage(bitmap, worldX: 0, worldY: 0, worldWidthMeters: 250f);
 ```
 
+### Front / side view background (elevations)
+
+```csharp
+// an elevation drawing in the X-Z plane at Y = 0: X from 0 to 60 m, bottom edge at Z = 0
+engine.SetFrontBackgroundImage(ActiveCanvas.LoadImageFile(@"C:\data\elevation.png"), minX: 0, minZ: 0, widthMeters: 60);
+engine.ShowFrontView();
+
+// side view (Y-Z plane at X = 0), shown the right way round in ShowSideView()
+engine.SetSideBackgroundImage(sideBitmap, minY: 0, minZ: 0, widthMeters: 40, atX: 0);
+
+// in the 3D view both stand in the scene - hide one or make it semi-transparent
+engine.SetBackgroundOpacity(ActiveCanvas.BackgroundPlane.Front, 0.5f);
+engine.SetBackgroundVisible(ActiveCanvas.BackgroundPlane.Side, false);
+```
+
+The plan-view image (`SetBackgroundImage`, GeoTIFF) is the `Ground` plane; visibility, opacity and
+`ClearBackgroundImage(plane)` work the same way for all three.
+
 ### OpenStreetMap tile layer
 
 ```csharp
@@ -260,6 +281,7 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `ActiveCanvas.Input.cs` | Mouse handling, wheel zoom via `IMessageFilter` |
 | `ActiveCanvas.Rendering.cs` | All drawing |
 | `ActiveCanvas.PropertyGrid.cs` | `PropertyGrid` integration |
+| `ActiveCanvas.Backgrounds.cs` | Background images in the plan / front / side plane, visibility, opacity |
 | `ActiveCanvas.GeoTiff.cs` | Georeferencing from a world file / GeoTIFF tags |
 | `ActiveCanvas.OpenStreetMap.cs` | OSM/XYZ tile layer, Web Mercator and GPS helpers, tile cache |
 | `ActiveCanvas.NorthArrow.cs` | North arrow for rotated drawings / rotated 2D views |
@@ -271,6 +293,19 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `BackgroundImageOpener.cs` | Ready-made "open background image" dialog for a host app |
 
 ## Changelog
+
+### Unreleased
+
+- **Renamed (breaking):** namespace `SimpleDrawingEngine` → `ActiveCanvasEngine`, library project/DLL
+  `SimpleInteractiveEngine.Core` → `ActiveCanvasEngine` (`ActiveCanvasEngine.dll`), solution
+  `ActiveCanvasEngine.sln`. The class is still `ActiveCanvas` - just change `using SimpleDrawingEngine;`
+  to `using ActiveCanvasEngine;` and re-add the project/DLL reference.
+
+- Background images for the front (X-Z) and side (Y-Z) plane in addition to the plan view
+  (`SetFrontBackgroundImage()`, `SetSideBackgroundImage()`), per-plane visibility and opacity
+  (`SetBackgroundVisible()`, `SetBackgroundOpacity()`), `ClearBackgroundImage(plane)`,
+  `ClearAllBackgroundImages()`, `LoadImageFile()`
+- `BackgroundImageOpener.ShowAsync()` can open a front/side image too
 
 ### 1.0.1
 

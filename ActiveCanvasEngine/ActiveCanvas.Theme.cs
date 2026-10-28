@@ -1,6 +1,6 @@
 using System.Drawing;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     public partial class ActiveCanvas
     {

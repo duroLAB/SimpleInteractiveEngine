@@ -1,11 +1,10 @@
-using SimpleDrawingEngine;
-using SimpleInteractiveEngine;
+using ActiveCanvasEngine;
 using System.Globalization;
 using System.Numerics;
 using System.Windows.Forms;
 using System.Xml.Linq;
 
-namespace SimpleInteractiveEngine.TestApp
+namespace ActiveCanvasEngine.TestApp
 {
     public partial class MainForm : Form
     {
@@ -154,11 +153,62 @@ namespace SimpleInteractiveEngine.TestApp
         private void toolStripButtonFullZoom_Click(object sender, EventArgs e)
         {
             engine.ZoomToFullExtent();           // 10% okraj (default)
-                                                 //   engine.ZoomToFullExtent(0f);         // presne na okraj, bez rezervy
-           
+            engine.ZoomToFullExtent(0f);                                      //   engine.ZoomToFullExtent(0f);         // presne na okraj, bez rezervy
+
         }
 
-        private async void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
+        private readonly ContextMenuStrip _backgroundMenu = new ContextMenuStrip();
+
+        /// <summary>Background images: open one per plane (plan / front / side), show/hide, opacity.</summary>
+        private void toolStripButtonOpenBackGroundImage_Click(object sender, EventArgs e)
+        {
+            _backgroundMenu.Items.Clear();
+            _backgroundMenu.Items.Add("Otvoriť pôdorys (X–Y)...", null, async (s, a) => await OpenBackgroundAsync(ActiveCanvas.BackgroundPlane.Ground));
+            _backgroundMenu.Items.Add("Otvoriť čelný pohľad (X–Z)...", null, async (s, a) => await OpenBackgroundAsync(ActiveCanvas.BackgroundPlane.Front));
+            _backgroundMenu.Items.Add("Otvoriť bočný pohľad (Y–Z)...", null, async (s, a) => await OpenBackgroundAsync(ActiveCanvas.BackgroundPlane.Side));
+
+            var planes = new[]
+            {
+                (Plane: ActiveCanvas.BackgroundPlane.Ground, Name: "pôdorys"),
+                (Plane: ActiveCanvas.BackgroundPlane.Front, Name: "čelný pohľad"),
+                (Plane: ActiveCanvas.BackgroundPlane.Side, Name: "bočný pohľad")
+            };
+
+            foreach (var (plane, name) in planes)
+            {
+                bool hasImage = engine.HasBackgroundImage(plane);
+                _backgroundMenu.Items.Add(new ToolStripSeparator());
+
+                var visible = new ToolStripMenuItem($"Zobraziť {name}")
+                {
+                    Enabled = hasImage,
+                    Checked = engine.IsBackgroundVisible(plane)
+                };
+                visible.Click += (s, a) => engine.SetBackgroundVisible(plane, !engine.IsBackgroundVisible(plane));
+                _backgroundMenu.Items.Add(visible);
+
+                var opacity = new ToolStripMenuItem($"Krytie – {name}") { Enabled = hasImage };
+                foreach (int percent in new[] { 100, 75, 50, 25 })
+                {
+                    var option = new ToolStripMenuItem($"{percent} %")
+                    {
+                        Checked = Math.Abs(engine.GetBackgroundOpacity(plane) * 100f - percent) < 1f
+                    };
+                    option.Click += (s, a) => engine.SetBackgroundOpacity(plane, percent / 100f);
+                    opacity.DropDownItems.Add(option);
+                }
+                _backgroundMenu.Items.Add(opacity);
+
+                var remove = new ToolStripMenuItem($"Odstrániť {name}") { Enabled = hasImage };
+                remove.Click += (s, a) => engine.ClearBackgroundImage(plane);
+                _backgroundMenu.Items.Add(remove);
+            }
+
+            var button = toolStripButtonOpenBackGroundImage;
+            _backgroundMenu.Show(toolStrip1, new Point(button.Bounds.Left, button.Bounds.Bottom));
+        }
+
+        private async Task OpenBackgroundAsync(ActiveCanvas.BackgroundPlane plane)
         {
             // A background image is plain local meters / S-JTSK here, not Web Mercator - and it would be
             // hidden under the map anyway (OsmHidesBackgroundImage) - so opening one switches the map off.
@@ -168,8 +218,15 @@ namespace SimpleInteractiveEngine.TestApp
                 SetMapEnabled(false);
             }
 
-            // BackgroundImageOpener.Show(this, engine);
-            await BackgroundImageOpener.ShowAsync(this, engine);
+            await BackgroundImageOpener.ShowAsync(this, engine, plane);
+            if (plane == ActiveCanvas.BackgroundPlane.Ground || !engine.HasBackgroundImage(plane)) return;
+
+            // An elevation is only seen face-on in its own view - switch there so it's visible right away.
+            if (plane == ActiveCanvas.BackgroundPlane.Front) engine.ShowFrontView();
+            else engine.ShowSideView();
+
+            toolStripButton3D2Dview.Image = imageList1.Images[0]; // we're out of the top view now
+            engine.ZoomToFullExtent();
         }
 
         private void toolStripButtonClearAll_Click(object sender, EventArgs e)

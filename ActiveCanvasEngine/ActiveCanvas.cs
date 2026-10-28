@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Windows.Forms;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     /// <summary>
     /// Universal, simple interactive drawing engine for WinForms - covers both the 2D and 3D case
@@ -98,15 +98,7 @@ namespace SimpleDrawingEngine
         #endregion
 
         #region Camera state, UI wiring and events
-        // ---- Background bitmap (map/drawing), lying in the world plane at a given Z ----
-        private Image? _backgroundImage;
-        // Stored as RAW coordinates and converted through the CURRENT local origin when used (see
-        // BackgroundLocalOrigin) - so a SetLocalOrigin() call made after loading the image (e.g. when the
-        // OSM layer gets turned on) can never push the image somewhere millions of meters away.
-        private Vector3 _bgRawOrigin;
-        private Vector3 BackgroundLocalOrigin => ToLocal(_bgRawOrigin);
-        private float _bgWorldWidth;
-        private float _bgWorldHeight;
+        // ---- Background images (plan / front / side plane) live in ActiveCanvas.Backgrounds.cs ----
 
         // ---- Camera ----
         // Default = top view (pure 2D). For 3D scenes call ShowIsometricView() or set your own.
@@ -373,7 +365,7 @@ namespace SimpleDrawingEngine
             _pictureBox.Disposed += (s, e) =>
             {
                 Application.RemoveMessageFilter(_wheelFilter);
-                _backgroundImage?.Dispose();
+                DisposeBackgroundImages();
                 _osmEnabled = false;
                 ResetOsmState(); // cancel tile downloads in flight, free cached tiles
             };

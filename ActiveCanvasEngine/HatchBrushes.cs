@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     /// <summary>
     /// Helpers for building fill patterns (dot grids, hatching) usable directly with any

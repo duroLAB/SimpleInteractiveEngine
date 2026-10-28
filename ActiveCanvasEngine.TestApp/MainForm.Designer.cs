@@ -1,4 +1,4 @@
-﻿namespace SimpleInteractiveEngine.TestApp
+﻿namespace ActiveCanvasEngine.TestApp
 {
     partial class MainForm
     {

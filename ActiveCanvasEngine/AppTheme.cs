@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     /// <summary>
     /// Simple, dependency-free dark/light theming for a whole WinForms app (Form + all its child

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Numerics;
 using System.Windows.Forms;
 
-namespace SimpleDrawingEngine
+namespace ActiveCanvasEngine
 {
     public partial class ActiveCanvas
     {

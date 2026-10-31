@@ -45,6 +45,7 @@ namespace ActiveCanvasEngine.TestApp
             this.KeyPreview = true;
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Escape) engine.CancelDrawing(); };
             this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Enter) engine.FinishDrawing(); };
+            this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Delete && !engine.IsDrawing) engine.RemoveSelected(); };
 
 
             engine.PointDoubleClicked += (s, p) =>

@@ -64,6 +64,8 @@ hit-testing — done properly once, instead of rebuilt from scratch for every ne
   properties dialog
 - A consistent GUID `Id` on every item, for linking with the host application's own data
 - `FindById()`, events for selection/clicks/moves — no need to touch the `PictureBox` directly
+- `Remove()` / `RemoveSelected()` — deletes an item together with what depends on it (a point leaves its
+  lines/areas, a shape takes its connectors along), with an `ItemRemoved` event
 - Dark/light theme for the canvas (`ApplyDarkTheme()` / `ApplyLightTheme()`) and for the whole host form
   (`AppTheme`), plus hatch/dot pattern fills for areas and shapes (`HatchBrushes`)
 
@@ -257,6 +259,19 @@ engine.StartMeasuring();
 engine.MeasurementCompleted += (s, meters) => statusLabel.Text = $"{meters:F2} m";
 ```
 
+### Removing items
+
+```csharp
+// Delete key removes whatever is selected
+this.KeyDown += (s, e) => { if (e.KeyCode == Keys.Delete) engine.RemoveSelected(); };
+
+// fires for every removed item - also for vertices/connectors removed along with it
+engine.ItemRemoved += (s, item) => Console.WriteLine($"Removed {item.GetType().Name}");
+
+engine.Remove(route);                          // a polyline together with its own vertices
+engine.Remove(zone, removeVertices: false);    // a polygon, its vertices stay as points
+```
+
 ### PropertyGrid dialog on double-click
 
 ```csharp
@@ -277,6 +292,7 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `ActiveCanvas.cs` | Data, configuration, state, constructor, events |
 | `ActiveCanvas.Types.cs` | Nested types (`Point3D`, `Polyline`, `Polygon`, `ImageMarker`, `ShapeMarker`, `ShapeConnector`) |
 | `ActiveCanvas.PublicApi.cs` | `Add...()` methods, `Clear()`, `FindById()`, drawing/placing API |
+| `ActiveCanvas.Remove.cs` | `Remove()`, `RemoveSelected()`, `ItemRemoved` - removing items with their dependents |
 | `ActiveCanvas.Camera.cs` | View presets, coordinate projection, hit-testing, selection |
 | `ActiveCanvas.Input.cs` | Mouse handling, wheel zoom via `IMessageFilter` |
 | `ActiveCanvas.Rendering.cs` | All drawing |
@@ -306,6 +322,7 @@ engine.ShapeDoubleClicked += (s, shape) =>
   (`SetBackgroundVisible()`, `SetBackgroundOpacity()`), `ClearBackgroundImage(plane)`,
   `ClearAllBackgroundImages()`, `LoadImageFile()`
 - `BackgroundImageOpener.ShowAsync()` can open a front/side image too
+- `Remove()` / `RemoveSelected()` and the `ItemRemoved` event; TestApp: Delete key removes the selected item
 
 ### 1.0.1
 

@@ -57,6 +57,8 @@ namespace ActiveCanvasEngine
 
         private void RebuildBuffer()
         {
+            if (_disposed) return; // a resize posted via BeginInvoke can still arrive after Dispose()
+
             int w = Math.Max(1, _pictureBox.ClientSize.Width);
             int h = Math.Max(1, _pictureBox.ClientSize.Height);
 

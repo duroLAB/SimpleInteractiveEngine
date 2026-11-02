@@ -103,6 +103,15 @@ engine.AddPoint(5, 3, 0, "Point A");
 
 That's it to get started — the engine handles the mouse, canvas resizing, and rendering by itself.
 
+**Lifetime:** `ActiveCanvas` is `IDisposable`. It cleans up automatically when its `PictureBox` is disposed
+(e.g. the form closes). To attach a new engine to the same `PictureBox` (e.g. when opening another project),
+dispose the old one first — otherwise both would react to the mouse:
+
+```csharp
+engine.Dispose();                          // detaches from the PictureBox, frees bitmaps and tile downloads
+engine = new ActiveCanvas(pictureBox1);
+```
+
 ---
 
 ## Examples by element type
@@ -292,6 +301,7 @@ engine.ShapeDoubleClicked += (s, shape) =>
 | `ActiveCanvas.cs` | Data, configuration, state, constructor, events |
 | `ActiveCanvas.Types.cs` | Nested types (`Point3D`, `Polyline`, `Polygon`, `ImageMarker`, `ShapeMarker`, `ShapeConnector`) |
 | `ActiveCanvas.PublicApi.cs` | `Add...()` methods, `Clear()`, `FindById()`, drawing/placing API |
+| `ActiveCanvas.Dispose.cs` | `IDisposable` - detaching from the `PictureBox`, freeing bitmaps |
 | `ActiveCanvas.Remove.cs` | `Remove()`, `RemoveSelected()`, `ItemRemoved` - removing items with their dependents |
 | `ActiveCanvas.Camera.cs` | View presets, coordinate projection, hit-testing, selection |
 | `ActiveCanvas.Input.cs` | Mouse handling, wheel zoom via `IMessageFilter` |
@@ -323,6 +333,9 @@ engine.ShapeDoubleClicked += (s, shape) =>
   `ClearAllBackgroundImages()`, `LoadImageFile()`
 - `BackgroundImageOpener.ShowAsync()` can open a front/side image too
 - `Remove()` / `RemoveSelected()` and the `ItemRemoved` event; TestApp: Delete key removes the selected item
+- `ActiveCanvas` is `IDisposable` (`Dispose()`, `IsDisposed`): detaches from the `PictureBox` and the
+  application-wide wheel filter, frees bitmaps and cancels tile downloads; still runs automatically when the
+  `PictureBox` is disposed
 
 ### 1.0.1
 

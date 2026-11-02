@@ -358,22 +358,17 @@ namespace ActiveCanvasEngine
             _pictureBox.MouseMove += OnMouseMove;
             _pictureBox.MouseUp += OnMouseUp;
             _pictureBox.MouseLeave += OnMouseLeave;
-            _pictureBox.Resize += (s, e) => DeferredRebuildBuffer();
+            _pictureBox.Resize += OnPictureBoxResize;
 
             _wheelFilter = new WheelMessageFilter(this);
             Application.AddMessageFilter(_wheelFilter);
-            _pictureBox.Disposed += (s, e) =>
-            {
-                Application.RemoveMessageFilter(_wheelFilter);
-                DisposeBackgroundImages();
-                _osmEnabled = false;
-                ResetOsmState(); // cancel tile downloads in flight, free cached tiles
-            };
+            _pictureBox.Disposed += OnPictureBoxDisposed; // closing the form cleans up automatically - see Dispose()
 
+            // Named handlers (not lambdas) everywhere, so Dispose() can unsubscribe them again.
             if (_pictureBox.IsHandleCreated)
                 RebuildBuffer();
             else
-                _pictureBox.HandleCreated += (s, e) => RebuildBuffer();
+                _pictureBox.HandleCreated += OnPictureBoxHandleCreated;
         }
         #endregion
     }
